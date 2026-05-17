@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<meta name="theme-color" content="#6366f1"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="LinguaLens"/>
+<link rel="manifest" href="manifest.json"/>
 <title>LinguaLens</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Amiri&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -11,6 +17,18 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f4f6fb;--surface:#fff;--primary:#4f46e5;--pl:#eef2ff;--accent:#10b981;--danger:#ef4444;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--r:14px;--sh:0 2px 16px rgba(79,70,229,.08)}
 body.dark{--bg:#0f172a;--surface:#1e293b;--primary:#818cf8;--pl:#1e1b4b;--text:#f1f5f9;--muted:#94a3b8;--border:#334155}
+/* وضع القراءة الليلي — ألوان دافئة تريح العين */
+body.night{--bg:#1a1209;--surface:#221a0e;--primary:#d97706;--pl:#2d1f0a;--text:#f5e6c8;--muted:#9c8060;--border:#3d2e18;--accent:#d97706}
+body.night #ra{background:#1e1508;color:#f0ddb0;line-height:2.4;letter-spacing:.01em}
+body.night .card{background:#221a0e;border-color:#3d2e18}
+body.night .topbar{background:#1a1209;border-color:#3d2e18}
+body.night .tabbar{background:#1a1209;border-color:#3d2e18}
+body.night #night-btn{color:#d97706!important;border-color:#d97706!important}
+/* شريط سطوع الليل */
+#night-controls{display:none;align-items:center;gap:10px;padding:7px 14px;background:rgba(217,119,6,.12);border-bottom:1px solid rgba(217,119,6,.2)}
+body.night #night-controls{display:flex}
+#night-controls label{font-size:.78rem;color:#d97706}
+#night-brightness{flex:1;accent-color:#d97706}
 body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
 
 /* LOCK */
@@ -35,9 +53,10 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 .topbar{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:11px 15px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh)}
 .topbar h1{font-size:1.25rem;color:var(--primary);font-weight:700}
 .ico-btn{width:37px;height:37px;border-radius:9px;border:1px solid var(--border);background:var(--bg);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
-.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:1px solid var(--border);display:flex}
-.tab-btn{flex:1;padding:9px 4px 7px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:'Cairo',sans-serif;font-size:.7rem;display:flex;flex-direction:column;align-items:center;gap:3px}
-.tab-btn .ti{font-size:1.3rem}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--surface);border-top:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tab-btn{flex:0 0 auto;min-width:60px;padding:8px 6px 6px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:'Cairo',sans-serif;font-size:.65rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab-btn .ti{font-size:1.2rem}
 .tab-btn.active{color:var(--primary)}
 .main{flex:1;padding:14px;padding-bottom:78px;overflow-y:auto}
 .panel{display:none}.panel.active{display:block}
@@ -58,6 +77,25 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 #oprg{display:none}
 .spin{display:inline-block;width:18px;height:18px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-left:7px}
 @keyframes sp{to{transform:rotate(360deg)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.etab{padding:7px 13px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);font-family:'Cairo',sans-serif;font-size:.82rem;cursor:pointer;}
+.active-etab{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent;font-weight:700;}
+
+/* وضع التركيز */
+body.focus-mode .tabbar{display:none!important;}
+body.focus-mode .topbar{background:transparent!important;box-shadow:none!important;border:none!important;}
+body.focus-mode .topbar h1{display:none;}
+body.focus-mode .topbar .ico-btn:not(#focus-btn):not(#back-btn){display:none!important;}
+body.focus-mode #back-btn{display:none!important;}
+body.focus-mode .main{padding-bottom:0!important;}
+body.focus-mode .panel:not(#panel-reader){display:none!important;}
+body.focus-mode #panel-reader .rctrl{position:sticky;top:0;background:var(--surface);z-index:10;border-radius:0;padding:6px 4px;}
+body.focus-mode #panel-reader .card{border-radius:0!important;box-shadow:none!important;border:none!important;padding:10px 14px!important;}
+body.focus-mode #ra{font-size:1.08rem!important;line-height:2.1!important;}
+body.focus-mode #explain-btn{display:none;}
+body.focus-mode #focus-btn{color:#f59e0b!important;border-color:#f59e0b!important;}
+#focus-btn{font-size:1.05rem;}
 .tbox{width:100%;min-height:95px;padding:11px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'Cairo','Amiri',sans-serif;font-size:1rem;line-height:1.85;direction:auto;unicode-bidi:plaintext;resize:vertical;outline:none}
 .hint{font-size:.76rem;color:var(--muted);margin-top:5px}
 .arow{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
@@ -70,9 +108,11 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* READER */
 #ra{font-family:'Amiri','Cairo',serif;font-size:17px;line-height:2;color:var(--text);min-height:110px;user-select:text;-webkit-user-select:text;word-break:break-word}
-#ra p.line{margin-bottom:.6em;direction:auto;unicode-bidi:plaintext;text-align:justify}
+#ra p.line{margin-bottom:.6em;direction:auto;unicode-bidi:plaintext;text-align:start}
 #ra .word{cursor:pointer;border-radius:3px;padding:1px 2px;display:inline}
 #ra .word:hover{background:var(--pl)}
+#ra .word-saved{background:rgba(16,185,129,.2);border-bottom:2px solid #10b981;border-radius:3px}
+#ra .word-saved:hover{background:rgba(16,185,129,.35)}
 .rctrl{display:flex;align-items:center;gap:9px;background:var(--bg);border-radius:11px;padding:9px 13px;margin-bottom:11px;flex-wrap:wrap}
 .cb{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:.95rem;color:var(--text);display:flex;align-items:center;justify-content:center}
 .pb{padding:7px 16px;border-radius:9px;background:var(--primary);color:#fff;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:.88rem}
@@ -129,7 +169,24 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
       <button class="eye-btn" onclick="toggleEye()" type="button">👁️</button>
       <input type="password" id="key-inp" placeholder="المفتاح السري..."/>
     </div>
+    <div style="border-top:1px solid rgba(255,255,255,.2);padding-top:11px;margin-top:2px">
+      <p style="font-size:.8rem;color:rgba(255,255,255,.9)">🤖 مفتاح Groq API <span style="font-size:.7rem;opacity:.7">— مجاني من groq.com</span></p>
+      <!-- حالة: محفوظ -->
+      <div id="groq-saved-row" style="display:none;align-items:center;gap:8px;background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.4);border-radius:9px;padding:9px 12px;margin-top:6px">
+        <span style="font-size:.85rem;color:#6ee7b7;flex:1">✅ مفتاح Groq محفوظ</span>
+        <button onclick="deleteGroqKey()" style="background:rgba(239,68,68,.25);border:1px solid rgba(239,68,68,.5);color:#fca5a5;border-radius:7px;padding:4px 10px;font-size:.75rem;cursor:pointer;font-family:'Cairo',sans-serif">🗑️ حذف</button>
+      </div>
+      <!-- حالة: إدخال جديد -->
+      <div id="groq-input-row" class="key-field" style="margin-top:6px">
+        <button class="eye-btn" onclick="toggleGroqEye()" type="button">👁️</button>
+        <input type="password" id="groq-inp" placeholder="gsk_..." dir="ltr"/>
+      </div>
+      <p style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:4px" id="groq-hint">اختياري — يُحسّن جودة تصحيح OCR</p>
+    </div>
     <button class="bw" onclick="unlock()">🔓 فتح التطبيق</button>
+    <button id="install-btn" onclick="installApp()" style="display:none;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:12px;padding:11px 20px;font-family:'Cairo',sans-serif;font-size:.9rem;cursor:pointer;width:100%;margin-top:6px">
+      📲 تثبيت التطبيق على الهاتف
+    </button>
     <p style="font-size:.74rem;color:rgba(255,255,255,.6)">أول مرة؟ اختر أي مفتاح وسيُحفظ تلقائياً</p>
     <button class="bo" onclick="resetAll()">🔄 إعادة تعيين وحذف كل البيانات</button>
   </div>
@@ -137,9 +194,22 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <!-- APP -->
 <div id="app">
-  <div class="topbar">
-    <h1>🔤 LinguaLens</h1>
-    <button class="ico-btn" id="dark-btn" onclick="toggleDark()">🌙</button>
+  <div class="topbar" id="topbar">
+    <button class="ico-btn" id="back-btn" onclick="goBack()" style="display:none;font-size:1.3rem;border-color:var(--primary);color:var(--primary)">‹</button>
+    <h1 id="topbar-title">🔤 LinguaLens</h1>
+    <div style="display:flex;gap:6px">
+      <button class="ico-btn" id="focus-btn" onclick="toggleFocus()" title="وضع التركيز" style="display:none">🌙</button>
+      <button class="ico-btn" id="night-btn" onclick="toggleNight()" title="وضع القراءة الليلي">🕯️</button>
+      <button class="ico-btn" id="groq-btn" onclick="swTab('settings',null)" title="إعدادات Groq">🔑</button>
+      <button class="ico-btn" id="dark-btn" onclick="toggleDark()">🌓</button>
+    </div>
+  </div>
+  <!-- شريط التحكم بالوضع الليلي -->
+  <div id="night-controls">
+    <label>☀️</label>
+    <input type="range" id="night-brightness" min="60" max="100" value="85" oninput="applyNightBrightness(this.value)"/>
+    <label>🌕</label>
+    <span id="night-temp-btn" onclick="cycleNightTemp()" style="cursor:pointer;font-size:.78rem;color:#d97706;padding:3px 8px;border:1px solid rgba(217,119,6,.4);border-radius:6px">🌡️ دافئ</span>
   </div>
   <div class="main">
 
@@ -171,10 +241,9 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="card">
         <div class="ct">📂 تحميل محتوى</div>
         <div class="up-row">
-          <label class="up-btn">
-            <span class="uico">📄</span><span>ملف نصي</span>
-            <input type="file" accept=".txt,.md,.csv,.srt" hidden onchange="loadTxt(event)"/>
-          </label>
+          <button class="up-btn" onclick="openPaste()">
+            <span class="uico">📋</span><span>لصق نص</span>
+          </button>
           <label class="up-btn">
             <span class="uico">🖼️</span><span>صورة OCR</span>
             <input type="file" accept="image/*" hidden onchange="loadOCR(event)"/>
@@ -211,6 +280,19 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
           <button class="btn bg" onclick="send2Read()">📖 قراءة</button>
           <button class="btn br" onclick="clrTxt()">🗑️ مسح</button>
         </div>
+        <!-- شريط الإجراءات الإضافية (يظهر بعد الترجمة أو OCR) -->
+        <div id="extra-row" style="display:none;margin-top:7px;gap:7px;display:none;flex-wrap:wrap" class="arow">
+          <button class="btn bgy" id="undo-btn" onclick="undoTrans()" style="display:none">↩ النص الأصلي</button>
+          <button class="btn" id="fix-btn" onclick="fixOCR()" style="display:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff">🤖 تصحيح بالذكاء الاصطناعي</button>
+        </div>
+      </div>
+      <!-- مكتبة النصوص المحفوظة -->
+      <div class="card" id="lib-card" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="ct" style="margin:0">📚 نصوصي المحفوظة</div>
+          <button onclick="clrSavedTexts()" style="font-size:.75rem;padding:4px 10px;border-radius:8px;border:1.5px solid var(--danger);color:var(--danger);background:transparent;cursor:pointer;font-family:'Cairo',sans-serif">مسح الكل</button>
+        </div>
+        <div id="lib-list" style="display:flex;flex-direction:column;gap:7px"></div>
       </div>
     </div>
 
@@ -225,6 +307,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
           <button class="cb" onclick="chgS(-.25)" style="margin-right:auto">−</button>
           <span id="ssv" style="font-size:.8rem;color:var(--muted);min-width:38px">⚡1.0×</span>
           <button class="cb" onclick="chgS(.25)">+</button>
+          <button class="cb" title="تشخيص الأصوات" onclick="diagVoices()">🔎</button>
           <button class="pb" id="pbtn" onclick="togTTS()">▶ استماع</button>
         </div>
         <div class="pw">
@@ -232,10 +315,49 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
           <div class="pbar"><div class="pfill" id="rfill"></div></div>
         </div>
         <div id="ra"><p style="color:var(--muted);font-size:.93rem">📚 حمّل نصاً من تبويب الماسح للبدء</p></div>
+        <!-- أزرار الشرح والاختبار -->
+        <div style="margin-top:11px;display:flex;gap:8px">
+          <button id="explain-btn" onclick="explainText()"
+            style="flex:1;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:12px;padding:10px;font-size:.88rem;font-family:'Cairo',sans-serif;cursor:pointer">
+            🤖 شرح النص
+          </button>
+          <button id="rquiz-btn" onclick="startReadingQuiz()"
+            style="flex:1;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border:none;border-radius:12px;padding:10px;font-size:.88rem;font-family:'Cairo',sans-serif;cursor:pointer">
+            📝 اختبار الفهم
+          </button>
+        </div>
+      </div>
+      <!-- دفتر الملاحظات -->
+      <div class="card" id="notes-card" style="margin-top:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="ct" style="margin:0">✍️ ملاحظاتي على النص</div>
+          <div style="display:flex;gap:6px">
+            <span id="note-saved-badge" style="display:none;font-size:.72rem;color:var(--accent);padding:3px 8px;border-radius:6px;background:rgba(16,185,129,.12)">✅ محفوظ</span>
+            <button onclick="toggleNotes()" id="note-toggle-btn"
+              style="font-size:.8rem;padding:4px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer">
+              ▼
+            </button>
+          </div>
+        </div>
+        <div id="notes-body">
+          <textarea id="note-ta" placeholder="أفكارك، أسئلتك، تلخيصك…"
+            style="width:100%;min-height:90px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);padding:10px 12px;font-size:.9rem;font-family:'Cairo',sans-serif;resize:vertical;outline:none;box-sizing:border-box;direction:auto;line-height:1.7"
+            oninput="onNoteChange()"></textarea>
+          <div style="display:flex;gap:7px;margin-top:8px">
+            <button onclick="saveNote()" id="note-save-btn"
+              style="flex:1;padding:9px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:.88rem;cursor:pointer">
+              💾 حفظ الملاحظة
+            </button>
+            <button onclick="clearNote()"
+              style="padding:9px 13px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:.82rem;cursor:pointer;color:var(--muted)">
+              🗑️
+            </button>
+          </div>
+          <!-- الملاحظات السابقة لهذا النص -->
+          <div id="notes-history" style="margin-top:10px;display:flex;flex-direction:column;gap:7px"></div>
+        </div>
       </div>
     </div>
-
-    <!-- VOCAB -->
     <div class="panel" id="panel-vocab">
       <div class="card">
         <div class="ct">🗂️ مفرداتي · <span id="vcnt">0</span> كلمة</div>
@@ -246,7 +368,9 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
             <tbody id="vtbd"></tbody>
           </table>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:9px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:9px">
+          <button class="btn" onclick="fixVocabLangs()" style="flex:none;padding:8px 14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;font-size:.82rem">🔧 تصحيح اللغات</button>
+          <button class="btn br" onclick="clrVocab()" style="flex:none;padding:8px 16px">🗑️ مسح الكل</button>
           <button class="btn bgy" onclick="expCSV()" style="flex:none;padding:8px 16px">📥 تصدير CSV</button>
         </div>
       </div>
@@ -254,6 +378,36 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 
     <!-- QUIZ -->
     <div class="panel" id="panel-quiz">
+
+      <!-- مراجعة يومية SRS -->
+      <div class="card" id="srs-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="ct" style="margin:0">📅 مراجعة اليوم</div>
+          <span id="srs-badge" style="font-size:.78rem;padding:4px 10px;border-radius:20px;background:rgba(239,68,68,.12);color:#ef4444;font-weight:700"></span>
+        </div>
+        <div id="srs-empty" style="color:var(--muted);font-size:.85rem;padding:8px 0">لا توجد كلمات للمراجعة اليوم 🎉</div>
+        <div id="srs-content" style="display:none">
+          <!-- بطاقة الكلمة -->
+          <div id="srs-qcard" style="background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:12px;cursor:pointer" onclick="revSRS()">
+            <div id="srs-word" style="font-size:1.6rem;font-weight:900;color:var(--primary);direction:auto"></div>
+            <div id="srs-lang" style="font-size:.75rem;color:var(--muted);margin-top:4px"></div>
+            <div id="srs-answer" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+              <div id="srs-trans" style="font-size:1.1rem;color:var(--accent);font-weight:600"></div>
+              <div style="font-size:.75rem;color:var(--muted);margin-top:4px">كم كان تذكرك؟</div>
+            </div>
+            <div id="srs-hint" style="font-size:.8rem;color:var(--muted);margin-top:8px">اضغط للكشف عن الترجمة</div>
+          </div>
+          <!-- أزرار التقييم (تظهر بعد الكشف) -->
+          <div id="srs-btns" style="display:none;display:none;grid-template-columns:repeat(4,1fr);gap:7px">
+            <button onclick="rateSRS(0)" style="padding:10px 4px;border-radius:10px;background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.3);color:#ef4444;font-size:.78rem;cursor:pointer;font-family:'Cairo',sans-serif">😰<br>لم أتذكر</button>
+            <button onclick="rateSRS(1)" style="padding:10px 4px;border-radius:10px;background:rgba(249,115,22,.1);border:1.5px solid rgba(249,115,22,.3);color:#f97316;font-size:.78rem;cursor:pointer;font-family:'Cairo',sans-serif">😅<br>صعب</button>
+            <button onclick="rateSRS(2)" style="padding:10px 4px;border-radius:10px;background:rgba(99,102,241,.1);border:1.5px solid rgba(99,102,241,.3);color:#6366f1;font-size:.78rem;cursor:pointer;font-family:'Cairo',sans-serif">🙂<br>جيد</button>
+            <button onclick="rateSRS(3)" style="padding:10px 4px;border-radius:10px;background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.3);color:#10b981;font-size:.78rem;cursor:pointer;font-family:'Cairo',sans-serif">😁<br>سهل!</button>
+          </div>
+          <!-- تقدم الجلسة -->
+          <div id="srs-progress" style="margin-top:10px;text-align:center;font-size:.78rem;color:var(--muted)"></div>
+        </div>
+      </div>
       <div class="card">
         <div class="ct">🃏 اختبار المفردات · <span id="qcnt">0</span> كلمة</div>
         <div id="qemp" style="color:var(--muted);font-size:.88rem;padding:8px 0">احفظ كلمات من القراءة أولاً</div>
@@ -281,6 +435,69 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
           </div>
         </div>
       </div>
+
+      <!-- الألعاب اللغوية -->
+      <div class="card" style="margin-top:0">
+        <div class="ct">🎮 الألعاب اللغوية</div>
+
+        <!-- كلمة اليوم -->
+        <div id="wod-section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1));border-radius:14px;border:1.5px solid rgba(99,102,241,.2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-weight:700;color:var(--text);font-size:.95rem">⭐ كلمة اليوم</span>
+            <button onclick="newWod()" style="font-size:.75rem;padding:4px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif">🔀 أخرى</button>
+          </div>
+          <div id="wod-empty" style="color:var(--muted);font-size:.85rem">احفظ كلمات أولاً لتظهر كلمة اليوم</div>
+          <div id="wod-content" style="display:none">
+            <div id="wod-word" style="font-size:1.5rem;font-weight:900;color:var(--primary);text-align:center;margin:6px 0;direction:auto"></div>
+            <div id="wod-trans" style="display:none;text-align:center;font-size:1rem;color:var(--accent);margin-bottom:8px"></div>
+            <div style="display:flex;gap:8px;justify-content:center">
+              <button onclick="wodSpeak()" style="padding:7px 14px;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;font-size:.85rem">🔊 نطق</button>
+              <button onclick="toggleWodTrans()" id="wod-btn" style="padding:7px 14px;border-radius:10px;background:var(--primary);border:none;color:#fff;cursor:pointer;font-family:'Cairo',sans-serif;font-size:.85rem">👁️ ترجمة</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- صواب/خطأ -->
+        <div style="margin-bottom:14px;padding:14px;background:var(--bg);border-radius:14px;border:1.5px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-weight:700;color:var(--text);font-size:.95rem">⚡ صواب / خطأ</span>
+            <span id="tf-score" style="font-size:.8rem;color:var(--muted)">0/0</span>
+          </div>
+          <div id="tf-empty" style="color:var(--muted);font-size:.85rem">تحتاج 3 كلمات على الأقل</div>
+          <div id="tf-content" style="display:none">
+            <div style="text-align:center;margin-bottom:10px">
+              <div id="tf-word" style="font-size:1.2rem;font-weight:700;color:var(--text);direction:auto"></div>
+              <div style="margin:4px 0;font-size:.78rem;color:var(--muted)">هل هذه الترجمة صحيحة؟</div>
+              <div id="tf-trans" style="font-size:1rem;color:var(--primary);font-weight:600"></div>
+            </div>
+            <div id="tf-feedback" style="text-align:center;min-height:24px;font-size:.9rem;font-weight:700;margin-bottom:8px"></div>
+            <div style="display:flex;gap:10px">
+              <button onclick="tfAnswer(false)" style="flex:1;padding:12px;border-radius:12px;background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:#ef4444;font-size:1.1rem;cursor:pointer;font-weight:700">❌ خطأ</button>
+              <button onclick="tfAnswer(true)" style="flex:1;padding:12px;border-radius:12px;background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.3);color:#10b981;font-size:1.1rem;cursor:pointer;font-weight:700">✅ صواب</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- اكتب الترجمة -->
+        <div style="padding:14px;background:var(--bg);border-radius:14px;border:1.5px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-weight:700;color:var(--text);font-size:.95rem">✍️ اكتب الترجمة</span>
+            <span id="wr-score" style="font-size:.8rem;color:var(--muted)">0/0</span>
+          </div>
+          <div id="wr-empty" style="color:var(--muted);font-size:.85rem">احفظ كلمات أولاً</div>
+          <div id="wr-content" style="display:none">
+            <div id="wr-word" style="font-size:1.3rem;font-weight:700;color:var(--text);text-align:center;margin-bottom:10px;direction:auto"></div>
+            <input id="wr-inp" type="text" placeholder="اكتب الترجمة…" dir="auto"
+              style="width:100%;padding:10px 14px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:1rem;font-family:'Cairo',sans-serif;box-sizing:border-box;outline:none"
+              onkeydown="if(event.key==='Enter')wrCheck()"/>
+            <div id="wr-feedback" style="text-align:center;min-height:22px;font-size:.88rem;margin:8px 0;font-weight:600"></div>
+            <div style="display:flex;gap:8px">
+              <button onclick="wrCheck()" style="flex:1;padding:11px;background:var(--primary);color:#fff;border:none;border-radius:11px;font-family:'Cairo',sans-serif;font-size:.95rem;cursor:pointer">✔ تحقق</button>
+              <button onclick="wrSkip()" style="flex:none;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;font-family:'Cairo',sans-serif;font-size:.85rem;cursor:pointer;color:var(--muted)">تخطي</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- PROGRESS -->
@@ -297,6 +514,157 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
         <div class="mw">
           <div class="mc"><span class="mv" id="mval">0%</span><span class="ml">الإتقان الكلي</span></div>
         </div>
+        <div style="display:flex;justify-content:center;margin-top:13px">
+          <button class="btn br" onclick="clrStats()" style="flex:none;padding:9px 24px">🗑️ مسح الإحصائيات</button>
+        </div>
+      </div>
+
+      <!-- الرسم البياني -->
+      <div class="card" style="margin-top:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="ct" style="margin:0">📈 تقدم آخر 7 أيام</div>
+          <div style="display:flex;gap:5px">
+            <button onclick="setChartMetric('vocab')" id="chart-btn-vocab"
+              style="font-size:.72rem;padding:4px 9px;border-radius:7px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer;font-family:'Cairo',sans-serif">📚 كلمات</button>
+            <button onclick="setChartMetric('trans')" id="chart-btn-trans"
+              style="font-size:.72rem;padding:4px 9px;border-radius:7px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif">🌐 ترجمات</button>
+            <button onclick="setChartMetric('correct')" id="chart-btn-correct"
+              style="font-size:.72rem;padding:4px 9px;border-radius:7px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif">🃏 إجابات</button>
+          </div>
+        </div>
+        <canvas id="progress-chart" height="160" style="width:100%;border-radius:8px"></canvas>
+        <div id="chart-legend" style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:.75rem;color:var(--muted)"></div>
+        <div style="margin-top:14px;padding:10px;background:var(--bg);border-radius:9px">
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:7px;text-align:center">🏆 أفضل يوم</div>
+          <div id="best-day" style="text-align:center;font-size:.9rem;color:var(--text);font-weight:600">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <!-- Groq API -->
+      <div class="card">
+        <div class="ct" style="margin-bottom:9px">🔑 Groq API</div>
+        <div id="groq-status-card" style="padding:8px;border-radius:9px;margin-bottom:9px;text-align:center;font-size:.8rem"></div>
+        <div style="display:flex;align-items:stretch;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;overflow:hidden;height:42px;margin-bottom:8px">
+          <button onclick="toggleSettingsGroqEye()" style="width:40px;background:var(--surface);border:none;border-left:1px solid var(--border);cursor:pointer;font-size:1rem;flex-shrink:0">👁️</button>
+          <input type="password" id="groq-settings-inp" placeholder="gsk_..." dir="ltr"
+            style="flex:1;padding:0 10px;background:transparent;border:none;color:var(--text);font-size:.85rem;outline:none;min-width:0"/>
+        </div>
+        <div class="arow" style="gap:7px">
+          <button class="btn bb" onclick="saveGroqKey()" style="padding:8px">💾 حفظ</button>
+          <button class="btn br" onclick="deleteGroqKeyApp()" style="padding:8px">🗑️ حذف</button>
+        </div>
+        <details style="margin-top:9px">
+          <summary style="font-size:.76rem;color:var(--muted);cursor:pointer">كيف تحصل على مفتاح مجاني؟</summary>
+          <div style="padding:8px;background:var(--bg);border-radius:8px;font-size:.75rem;color:var(--muted);line-height:1.8;margin-top:6px">
+            ١. console.groq.com ← سجّل<br>
+            ٢. API Keys ← Create API Key<br>
+            ٣. انسخ المفتاح والصقه هنا
+          </div>
+        </details>
+      </div>
+
+      <!-- نسخ احتياطي -->
+      <div class="card" style="margin-top:0">
+        <div class="ct" style="margin-bottom:9px">🔄 النسخ الاحتياطي</div>
+        <div id="storage-info" style="padding:7px;background:var(--bg);border-radius:8px;font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:10px"></div>
+        <!-- تصدير -->
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:7px">📤 تصدير</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px">
+          <button onclick="exportAll()" style="padding:10px 6px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-family:'Cairo',sans-serif;font-size:.82rem;cursor:pointer">📦 كل شيء</button>
+          <button onclick="exportVocab()" style="padding:10px 6px;background:var(--bg);border:1.5px solid var(--border);color:var(--text);border-radius:10px;font-family:'Cairo',sans-serif;font-size:.82rem;cursor:pointer">📚 مفردات فقط</button>
+        </div>
+        <!-- استيراد -->
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:7px">📥 استيراد</p>
+        <button onclick="document.getElementById('import-file').click()"
+          style="width:100%;padding:12px;background:var(--bg);border:1.5px dashed var(--border);border-radius:10px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:.88rem;color:var(--text);display:flex;align-items:center;justify-content:center;gap:10px">
+          <span style="font-size:1.2rem">📂</span>
+          <div style="text-align:right">
+            <div style="font-weight:600">اختر ملف نسخة احتياطية</div>
+            <div style="font-size:.72rem;color:var(--muted)">.json — يدمج مع البيانات الحالية</div>
+          </div>
+        </button>
+        <input type="file" id="import-file" accept=".json" hidden onchange="importBackup(event)"/>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="panel" id="panel-chat">
+      <div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 160px);padding:12px">
+
+        <!-- أزرار الوضع -->
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <button id="mode-free"  onclick="setChatMode('free')"
+            style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;font-family:'Cairo',sans-serif;font-size:.78rem;cursor:pointer;font-weight:700">
+            💬 محادثة حرة
+          </button>
+          <button id="mode-correct" onclick="setChatMode('correct')"
+            style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);font-family:'Cairo',sans-serif;font-size:.78rem;cursor:pointer">
+            ✏️ تصحيح أخطائي
+          </button>
+          <button id="mode-qa" onclick="setChatMode('qa')"
+            style="flex:1;padding:8px 4px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);font-family:'Cairo',sans-serif;font-size:.78rem;cursor:pointer">
+            🎯 AI يسأل
+          </button>
+        </div>
+
+        <!-- شريط السياق -->
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button onclick="setChatCtx()"
+            style="flex:1;font-size:.74rem;padding:5px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif">
+            📖 سياق النص
+          </button>
+          <button onclick="setChatLang()"
+            style="flex:1;font-size:.74rem;padding:5px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif" id="chat-lang-btn">
+            🌐 عربي
+          </button>
+          <button onclick="clearChat()"
+            style="flex:none;padding:5px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer;font-size:.8rem">
+            🗑️
+          </button>
+        </div>
+
+        <!-- شريط السياق النصي -->
+        <div id="chat-ctx-bar" style="display:none;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:9px;padding:7px 11px;font-size:.74rem;color:var(--muted);margin-bottom:8px">
+          📖 <span id="chat-ctx-label"></span>
+          <button onclick="removeChatCtx()" style="float:left;background:none;border:none;color:var(--muted);cursor:pointer">✕</button>
+        </div>
+
+        <!-- الرسائل -->
+        <div id="chat-msgs" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px;margin-bottom:10px">
+          <div style="align-self:flex-start;max-width:88%;background:var(--bg);border:1.5px solid var(--border);border-radius:16px 16px 16px 4px;padding:11px 14px;font-size:.9rem;line-height:1.8;color:var(--text)">
+            مرحباً! اختر وضع المحادثة وابدأ 🎙️<br>
+            <span style="font-size:.78rem;color:var(--muted)">💬 حرة · ✏️ تصحيح · 🎯 AI يسأل</span>
+          </div>
+        </div>
+
+        <!-- مؤشر التسجيل -->
+        <div id="voice-indicator" style="display:none;text-align:center;padding:6px;margin-bottom:6px">
+          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:20px;padding:6px 14px;font-size:.82rem;color:#ef4444">
+            <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;animation:pulse 1s infinite"></span>
+            جارٍ التسجيل… تكلّم الآن
+          </span>
+        </div>
+
+        <!-- خانة الإدخال -->
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <textarea id="chat-inp" placeholder="اكتب أو اضغط 🎙️ للكلام…" rows="1"
+            style="flex:1;border-radius:14px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);padding:11px 14px;font-size:.92rem;font-family:'Cairo',sans-serif;resize:none;outline:none;max-height:100px;overflow-y:auto;direction:auto"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+          <!-- زر الميكروفون -->
+          <button onclick="toggleVoice()" id="voice-btn"
+            style="width:46px;height:46px;border-radius:14px;background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-size:1.3rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+            🎙️
+          </button>
+          <!-- زر الإرسال -->
+          <button onclick="sendChat()" id="chat-send-btn"
+            style="width:46px;height:46px;border-radius:14px;background:var(--primary);border:none;color:#fff;font-size:1.2rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+            ➤
+          </button>
+        </div>
       </div>
     </div>
 
@@ -307,6 +675,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     <button class="tab-btn" onclick="swTab('reader',this)"><span class="ti">📖</span>القراءة</button>
     <button class="tab-btn" onclick="swTab('vocab',this)"><span class="ti">🗂️</span>مفرداتي</button>
     <button class="tab-btn" onclick="swTab('quiz',this)"><span class="ti">🃏</span>اختبار</button>
+    <button class="tab-btn" onclick="swTab('chat',this)"><span class="ti">🗣️</span>محادثة</button>
     <button class="tab-btn" onclick="swTab('progress',this)"><span class="ti">📊</span>تقدمي</button>
   </div>
 </div>
@@ -322,7 +691,100 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
+<!-- PASTE MODAL -->
+<div id="paste-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px 28px;width:100%;max-width:520px;box-shadow:0 -4px 24px rgba(0,0,0,.18)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:1rem;font-weight:700;color:var(--text)">📋 إضافة نص</span>
+      <button onclick="closePaste()" style="background:var(--bg);border:none;border-radius:8px;padding:5px 11px;font-size:1rem;cursor:pointer;color:var(--muted)">✕</button>
+    </div>
+
+    <!-- تبويبان -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="tab-paste" onclick="switchPasteTab('paste')"
+        style="flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;font-family:'Cairo',sans-serif;font-size:.88rem;cursor:pointer;font-weight:700">
+        📋 لصق نص
+      </button>
+      <button id="tab-url" onclick="switchPasteTab('url')"
+        style="flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;font-size:.88rem;cursor:pointer">
+        🔗 جلب من رابط
+      </button>
+    </div>
+
+    <!-- لوحة اللصق -->
+    <div id="pane-paste">
+      <textarea id="paste-ta" placeholder="الصق النص هنا من أي تطبيق…&#10;واتساب · موقع · ترجمة · كتاب PDF..."
+        style="width:100%;height:150px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);padding:12px;font-size:1rem;font-family:'Cairo',sans-serif;resize:none;outline:none;box-sizing:border-box;direction:auto"></textarea>
+      <div style="display:flex;gap:9px;margin-top:10px">
+        <button onclick="pasteFromClipboard()" style="flex:1;padding:12px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-size:.9rem;cursor:pointer;font-family:'Cairo',sans-serif">📲 لصق تلقائي</button>
+        <button onclick="confirmPaste()" style="flex:1.5;padding:12px;background:var(--primary);border:none;border-radius:11px;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif">✅ تأكيد</button>
+      </div>
+    </div>
+
+    <!-- لوحة الرابط -->
+    <div id="pane-url" style="display:none">
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">انسخ رابط أي صفحة وسيجلب التطبيق نصها تلقائياً</p>
+      <input id="url-inp" type="url" placeholder="https://..." dir="ltr"
+        style="width:100%;padding:12px;border-radius:11px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;outline:none;box-sizing:border-box;font-family:monospace"/>
+      <div style="display:flex;gap:9px;margin-top:10px">
+        <button onclick="pasteUrlFromClipboard()" style="flex:1;padding:12px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-size:.85rem;cursor:pointer;font-family:'Cairo',sans-serif">📲 لصق الرابط</button>
+        <button onclick="fetchUrl()" id="fetch-btn" style="flex:1.5;padding:12px;background:var(--primary);border:none;border-radius:11px;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif">🔗 جلب النص</button>
+      </div>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:8px;text-align:center">يعمل مع معظم المواقع الإخبارية والمقالات</p>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
+
+<!-- EXPLAIN MODAL -->
+<div id="explain-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px 28px;width:100%;max-width:540px;max-height:82vh;overflow-y:auto;box-shadow:0 -4px 24px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <span style="font-size:1rem;font-weight:700;color:var(--text)">🤖 شرح النص</span>
+      <button onclick="closeExplain()" style="background:var(--bg);border:none;border-radius:8px;padding:5px 11px;font-size:1rem;cursor:pointer;color:var(--muted)">✕</button>
+    </div>
+    <!-- أزرار نوع الشرح -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="explain-tabs">
+      <button class="etab active-etab" onclick="switchExplain('summary')" data-t="summary">📋 ملخص</button>
+      <button class="etab" onclick="switchExplain('ideas')" data-t="ideas">💡 الأفكار الرئيسية</button>
+      <button class="etab" onclick="switchExplain('vocab')" data-t="vocab">📚 مفردات صعبة</button>
+      <button class="etab" onclick="switchExplain('grammar')" data-t="grammar">📐 تراكيب لغوية</button>
+    </div>
+    <div id="explain-loading" style="display:none;text-align:center;padding:30px;color:var(--muted)">
+      <div style="font-size:2rem;animation:spin 1s linear infinite;display:inline-block">⏳</div>
+      <p style="margin-top:10px">جارٍ التحليل…</p>
+    </div>
+    <div id="explain-result" style="font-size:.93rem;line-height:2;color:var(--text);white-space:pre-wrap;direction:auto"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button onclick="reExplain()" id="re-explain-btn" style="display:none;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-family:'Cairo',sans-serif;color:var(--text);cursor:pointer;font-size:.85rem">🔄 تحديث</button>
+      <button onclick="translateExplainToAr()" id="translate-explain-btn" style="display:none;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-family:'Cairo',sans-serif;cursor:pointer;font-size:.85rem">🌐 ترجمة للعربية</button>
+    </div>
+  </div>
+</div>
+
+<!-- READING QUIZ MODAL -->
+<div id="rquiz-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:18px 16px 28px;width:100%;max-width:540px;max-height:88vh;overflow-y:auto;box-shadow:0 -4px 24px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;direction:rtl">
+      <span style="font-size:1rem;font-weight:700;color:var(--text)">📝 اختبار الفهم القرائي</span>
+      <button onclick="closeRQuiz()" style="background:var(--bg);border:none;border-radius:8px;padding:5px 11px;font-size:1rem;cursor:pointer;color:var(--muted)">✕</button>
+    </div>
+    <div id="rquiz-loading" style="text-align:center;padding:30px;color:var(--muted)">
+      <div style="font-size:2.5rem;animation:spin 1s linear infinite;display:inline-block">⏳</div>
+      <p style="margin-top:10px">جارٍ توليد الأسئلة…</p>
+    </div>
+    <div id="rquiz-body" style="display:none"></div>
+    <div id="rquiz-result" style="display:none;text-align:center;padding:16px">
+      <div id="rquiz-score" style="font-size:3rem;font-weight:900;color:var(--primary)"></div>
+      <div id="rquiz-msg" style="font-size:1rem;color:var(--muted);margin-top:6px"></div>
+      <div style="display:flex;gap:9px;margin-top:16px;justify-content:center">
+        <button onclick="startReadingQuiz()" style="padding:11px 20px;background:var(--primary);color:#fff;border:none;border-radius:11px;font-family:'Cairo',sans-serif;font-size:.9rem;cursor:pointer">🔄 أسئلة جديدة</button>
+        <button onclick="closeRQuiz()" style="padding:11px 20px;background:var(--bg);border:1.5px solid var(--border);color:var(--text);border-radius:11px;font-family:'Cairo',sans-serif;font-size:.9rem;cursor:pointer">✕ إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 var KEY='',vocab=[],stats={texts:0,spoken:0,correct:0,trans:0};
@@ -330,6 +792,16 @@ var fs=17,spd=1.0,ttsOn=false,ttsU=null;
 var qQ=[],qI=0,qRev=false;
 var cW='',cT='',cL='';
 var dark=false;
+var navHistory=[];
+var panelTitles={scanner:'🔍 الماسح',reader:'📖 القراءة',vocab:'🗂️ مفرداتي',quiz:'🃏 اختبار',progress:'📊 تقدمي',settings:'🔑 إعدادات Groq',chat:'🗣️ محادثة AI'};
+var origText='';
+var ANTH_KEY='';
+var GROQ_KEY='';
+var savedTexts=[];
+var notes={}; // {textHash: [{text, date}]}
+var currentTextHash='';
+var dailyStats={}; // {YYYY-MM-DD: {vocab:0,trans:0,correct:0}}
+var chartMetric='vocab';
 
 var SMP={
   ar:'الذكاء الاصطناعي يُحدث ثورة في مجال التعليم. أصبح بإمكان الطلاب تعلّم اللغات بطريقة تفاعلية وممتعة، مما يُسرّع من اكتساب المفردات وتحسين مهارات القراءة والاستيعاب. وتُعدّ هذه التقنية من أبرز الابتكارات التي غيّرت وجه التعليم الحديث.',
@@ -341,36 +813,283 @@ var SMP={
 };
 
 /* STORAGE */
-function sv(){try{localStorage.setItem('ll_v_'+KEY,JSON.stringify(vocab));localStorage.setItem('ll_s_'+KEY,JSON.stringify(stats));}catch(e){}}
-function ld(){try{var v=localStorage.getItem('ll_v_'+KEY);var s=localStorage.getItem('ll_s_'+KEY);vocab=v?JSON.parse(v):[];stats=s?JSON.parse(s):{texts:0,spoken:0,correct:0,trans:0};}catch(e){vocab=[];stats={texts:0,spoken:0,correct:0,trans:0};}}
+function sv(){
+  try{
+    localStorage.setItem('ll_v_'+KEY,JSON.stringify(vocab));
+    localStorage.setItem('ll_s_'+KEY,JSON.stringify(stats));
+    localStorage.setItem('ll_txts_'+KEY,JSON.stringify(savedTexts));
+    localStorage.setItem('ll_notes_'+KEY,JSON.stringify(notes));
+    localStorage.setItem('ll_daily_'+KEY,JSON.stringify(dailyStats));
+  }catch(e){}
+}
+function ld(){
+  try{
+    var v=localStorage.getItem('ll_v_'+KEY);
+    var s=localStorage.getItem('ll_s_'+KEY);
+    var t=localStorage.getItem('ll_txts_'+KEY);
+    var n=localStorage.getItem('ll_notes_'+KEY);
+    var d=localStorage.getItem('ll_daily_'+KEY);
+    vocab=v?JSON.parse(v):[];
+    stats=s?JSON.parse(s):{texts:0,spoken:0,correct:0,trans:0};
+    savedTexts=t?JSON.parse(t):[];
+    notes=n?JSON.parse(n):{};
+    dailyStats=d?JSON.parse(d):{};
+    if(savedTexts.length>0)buildReader(savedTexts[0].text);
+  }catch(e){vocab=[];stats={texts:0,spoken:0,correct:0,trans:0};savedTexts=[];notes={};dailyStats={};}
+}
 
 /* LOCK */
+function initLockScreen(){
+  var sgk=localStorage.getItem('ll_groq');
+  if(sgk){
+    document.getElementById('groq-saved-row').style.display='flex';
+    document.getElementById('groq-input-row').style.display='none';
+    document.getElementById('groq-hint').textContent='✅ مفتاح Groq محفوظ — التصحيح الذكي متاح';
+    document.getElementById('groq-hint').style.color='rgba(110,231,183,.8)';
+  }
+  // استعادة الأوضاع
+  var dk=localStorage.getItem('ll_dark');
+  if(dk==='1'){dark=true;document.body.classList.add('dark');document.getElementById('dark-btn').textContent='☀️';}
+  var nt=localStorage.getItem('ll_night');
+  if(nt==='1'){nightMode=true;document.body.classList.add('night');document.getElementById('night-btn').textContent='☀️';}
+}
+function deleteGroqKey(){
+  if(!confirm('حذف مفتاح Groq المحفوظ؟'))return;
+  localStorage.removeItem('ll_groq');GROQ_KEY='';
+  document.getElementById('groq-saved-row').style.display='none';
+  document.getElementById('groq-input-row').style.display='flex';
+  document.getElementById('groq-inp').value='';
+  document.getElementById('groq-hint').textContent='اختياري — يُحسّن جودة تصحيح OCR';
+  document.getElementById('groq-hint').style.color='rgba(255,255,255,.5)';
+}
 function unlock(){
   var k=document.getElementById('key-inp').value.trim();
   if(!k){toast('أدخل مفتاحاً');return;}
   var saved=localStorage.getItem('ll_key');
   if(!saved){localStorage.setItem('ll_key',k);}
   else if(saved!==k){toast('مفتاح خاطئ!');return;}
+  // حفظ/تحميل مفتاح Groq
+  var gk=document.getElementById('groq-inp').value.trim();
+  if(gk){localStorage.setItem('ll_groq',gk);GROQ_KEY=gk;}
+  else{var sgk=localStorage.getItem('ll_groq');if(sgk)GROQ_KEY=sgk;}
   KEY=k;ld();
   document.getElementById('lock').style.display='none';
   document.getElementById('app').classList.add('on');
+  updateGroqBtn();
   refAll();
 }
+function updateGroqBtn(){
+  var btn=document.getElementById('groq-btn');
+  btn.textContent=GROQ_KEY?'🔑':'⚙️';
+  btn.title=GROQ_KEY?'Groq مفعّل ✅':'إعدادات Groq';
+  btn.style.borderColor=GROQ_KEY?'var(--accent)':'var(--border)';
+  btn.style.color=GROQ_KEY?'var(--accent)':'var(--text)';
+}
+/* إعدادات Groq داخل التطبيق */
+function toggleSettingsGroqEye(){var i=document.getElementById('groq-settings-inp');i.type=i.type==='password'?'text':'password';}
+function saveGroqKey(){
+  var k=document.getElementById('groq-settings-inp').value.trim();
+  if(!k){toast('أدخل المفتاح أولاً');return;}
+  if(!k.startsWith('gsk_')){toast('⚠️ المفتاح يجب أن يبدأ بـ gsk_');return;}
+  localStorage.setItem('ll_groq',k);GROQ_KEY=k;
+  document.getElementById('groq-settings-inp').value='';
+  updateGroqBtn();
+  refSettingsStatus();
+  toast('✅ تم حفظ مفتاح Groq');
+}
+function deleteGroqKeyApp(){
+  if(!confirm('حذف مفتاح Groq؟'))return;
+  localStorage.removeItem('ll_groq');GROQ_KEY='';
+  document.getElementById('groq-settings-inp').value='';
+  updateGroqBtn();
+  refSettingsStatus();
+  toast('🗑️ تم حذف مفتاح Groq');
+}
+/* ===== النسخ الاحتياطي ===== */
+function exportAll(){
+  var data={version:'1.0',date:new Date().toISOString(),vocab:vocab,stats:stats,savedTexts:savedTexts,notes:notes};
+  downloadJSON(data,'lingualens_backup_'+today()+'.json');
+  toast('✅ تم تصدير كل البيانات');
+}
+function exportVocab(){
+  if(!vocab.length){toast('لا توجد مفردات');return;}
+  var data={version:'1.0',date:new Date().toISOString(),vocab:vocab};
+  downloadJSON(data,'lingualens_vocab_'+today()+'.json');
+  toast('✅ تم تصدير '+vocab.length+' كلمة');
+}
+function downloadJSON(data,filename){
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function today(){
+  var d=new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+}
+function todayKey(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function trackDaily(metric,val){
+  var k=todayKey();
+  if(!dailyStats[k])dailyStats[k]={vocab:0,trans:0,correct:0,texts:0};
+  dailyStats[k][metric]=(dailyStats[k][metric]||0)+(val||1);
+  var keys=Object.keys(dailyStats).sort();
+  if(keys.length>30)keys.slice(0,keys.length-30).forEach(function(k2){delete dailyStats[k2];});
+}
+function importBackup(e){
+  var file=e.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var data=JSON.parse(ev.target.result);
+      if(!data.version){toast('❌ ملف غير صالح');return;}
+      var added=0;
+      // دمج المفردات (بدون تكرار)
+      if(data.vocab&&Array.isArray(data.vocab)){
+        data.vocab.forEach(function(v){
+          if(!vocab.find(function(x){return x.word===v.word;})){
+            vocab.push(v);added++;
+          }
+        });
+      }
+      // دمج الإحصائيات
+      if(data.stats){
+        stats.texts+=data.stats.texts||0;
+        stats.spoken+=data.stats.spoken||0;
+        stats.correct+=data.stats.correct||0;
+        stats.trans+=data.stats.trans||0;
+      }
+      // دمج النصوص
+      if(data.savedTexts&&Array.isArray(data.savedTexts)){
+        data.savedTexts.forEach(function(t){
+          if(!savedTexts.find(function(x){return x.text===t.text;})){
+            savedTexts.push(t);
+          }
+        });
+        if(savedTexts.length>10)savedTexts=savedTexts.slice(0,10);
+      }
+      // دمج الملاحظات
+      if(data.notes&&typeof data.notes==='object'){
+        Object.keys(data.notes).forEach(function(k){
+          if(!notes[k])notes[k]=[];
+          notes[k]=notes[k].concat(data.notes[k]);
+        });
+      }
+      sv();refAll();refStorageInfo();
+      toast('✅ تم الاستيراد — أُضيفت '+added+' كلمة جديدة');
+    }catch(err){
+      toast('❌ خطأ في قراءة الملف');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value=''; // السماح بإعادة الاستيراد
+}
+function refStorageInfo(){
+  var el=document.getElementById('storage-info');
+  if(!el)return;
+  el.textContent='📚 '+vocab.length+' كلمة  ·  📄 '+savedTexts.length+' نص  ·  📊 '+stats.trans+' ترجمة';
+}
+
+function refSettingsStatus(){
+  var el=document.getElementById('groq-status-card');
+  if(!el)return;
+  if(GROQ_KEY){
+    el.style.background='rgba(16,185,129,.12)';
+    el.style.border='1px solid rgba(16,185,129,.3)';
+    el.style.color='var(--accent)';
+    el.textContent='✅ مفتاح Groq مفعّل — التصحيح الذكي يعمل بجودة عالية';
+  } else {
+    el.style.background='rgba(239,68,68,.08)';
+    el.style.border='1px solid rgba(239,68,68,.2)';
+    el.style.color='var(--danger)';
+    el.textContent='⚠️ لا يوجد مفتاح — التصحيح يعمل بجودة أقل';
+  }
+  refStorageInfo();
+}
 function toggleEye(){var i=document.getElementById('key-inp');i.type=i.type==='password'?'text':'password';}
+function toggleGroqEye(){var i=document.getElementById('groq-inp');i.type=i.type==='password'?'text':'password';}
 function resetAll(){if(!confirm('حذف جميع البيانات؟'))return;localStorage.clear();location.reload();}
 
 /* DARK */
-function toggleDark(){dark=!dark;document.body.classList.toggle('dark',dark);document.getElementById('dark-btn').textContent=dark?'☀️':'🌙';localStorage.setItem('ll_dark',dark?'1':'0');}
+/* وضع القراءة الليلي */
+var nightMode=false;
+var nightTemp=0; // 0=دافئ 1=بارد 2=رمادي
+var nightTemps=[
+  {label:'🌡️ دافئ', bg:'#1a1209',text:'#f5e6c8',surface:'#221a0e'},
+  {label:'🔵 بارد', bg:'#0d1117',text:'#cdd9e5',surface:'#161b22'},
+  {label:'⚫ رمادي',bg:'#111111',text:'#cccccc',surface:'#1a1a1a'}
+];
+function toggleNight(){
+  nightMode=!nightMode;
+  document.body.classList.toggle('night',nightMode);
+  // إيقاف الوضع الداكن عند تفعيل الليلي
+  if(nightMode&&dark){
+    dark=false;
+    document.body.classList.remove('dark');
+    document.getElementById('dark-btn').textContent='🌓';
+  }
+  document.getElementById('night-btn').textContent=nightMode?'☀️':'🕯️';
+  document.getElementById('night-btn').title=nightMode?'إيقاف الوضع الليلي':'وضع القراءة الليلي';
+  if(nightMode){
+    applyNightBrightness(document.getElementById('night-brightness').value);
+    toast('🕯️ وضع القراءة الليلي');
+  } else {
+    document.body.style.filter='';
+  }
+  localStorage.setItem('ll_night',nightMode?'1':'0');
+}
+function applyNightBrightness(val){
+  if(!nightMode)return;
+  document.body.style.filter='brightness('+val+'%) sepia(20%)';
+}
+function cycleNightTemp(){
+  nightTemp=(nightTemp+1)%nightTemps.length;
+  var t=nightTemps[nightTemp];
+  document.getElementById('night-temp-btn').textContent=t.label;
+  // تطبيق اللون على متغيرات CSS
+  document.documentElement.style.setProperty('--bg',t.bg);
+  document.documentElement.style.setProperty('--surface',t.surface);
+  document.documentElement.style.setProperty('--text',t.text);
+}
 
 /* TABS */
-function swTab(n,b){
+var currentTab='scanner';
+function swTab(n,b,fromBack){
+  if(!fromBack&&currentTab&&currentTab!==n){navHistory.push(currentTab);}
+  currentTab=n;
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});
   document.getElementById('panel-'+n).classList.add('active');
-  b.classList.add('active');
+  // تحديث التبويب النشط في الشريط السفلي
+  var tabMap={scanner:0,reader:1,vocab:2,quiz:3,chat:4,progress:5};
+  var idx=tabMap[n];
+  if(idx!==undefined)document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  if(b)b.classList.add('active');
+  // تحديث عنوان الشريط العلوي
+  document.getElementById('topbar-title').textContent=panelTitles[n]||'🔤 LinguaLens';
+  // إظهار/إخفاء زر الرجوع
+  document.getElementById('back-btn').style.display=navHistory.length?'flex':'none';
   if(n==='progress')refStats();
-  if(n==='quiz')initQuiz();
+  if(n==='quiz'){initQuiz();initGames();initSRS();}
   if(n==='vocab')refVocab();
+  if(n==='settings')refSettingsStatus();
+  // زر التركيز فقط في القراءة
+  document.getElementById('focus-btn').style.display=(n==='reader')?'flex':'none';
+  // الخروج من التركيز عند تغيير التبويب
+  if(focusMode&&n!=='reader'){
+    focusMode=false;
+    document.body.classList.remove('focus-mode');
+    document.getElementById('focus-btn').textContent='🌙';
+  }
+}
+function goBack(){
+  if(!navHistory.length)return;
+  var prev=navHistory.pop();
+  swTab(prev,null,true);
 }
 
 /* LANG */
@@ -385,8 +1104,83 @@ function setTxt(tx){
   ta.style.textAlign=r?'right':'left';
 }
 function onTI(){var ta=document.getElementById('etxt');var r=/[\u0600-\u06FF]/.test(ta.value);ta.style.direction=r?'rtl':'ltr';ta.style.textAlign=r?'right':'left';}
-function clrTxt(){document.getElementById('etxt').value='';document.getElementById('ipw').style.display='none';}
+function clrTxt(){
+  document.getElementById('etxt').value='';
+  document.getElementById('ipw').style.display='none';
+  origText='';
+  document.getElementById('undo-btn').style.display='none';
+  document.getElementById('fix-btn').style.display='none';
+  document.getElementById('extra-row').style.display='none';
+}
 function loadSmp(l){setTxt(SMP[l]||'');toast('تم تحميل نص تجريبي');}
+
+/* PASTE MODAL */
+function openPaste(){
+  document.getElementById('paste-ta').value='';
+  document.getElementById('url-inp').value='';
+  switchPasteTab('paste');
+  document.getElementById('paste-modal').style.display='flex';
+}
+function closePaste(){document.getElementById('paste-modal').style.display='none';}
+function switchPasteTab(t){
+  var isPaste=t==='paste';
+  document.getElementById('pane-paste').style.display=isPaste?'block':'none';
+  document.getElementById('pane-url').style.display=isPaste?'none':'block';
+  document.getElementById('tab-paste').style.background=isPaste?'var(--primary)':'var(--bg)';
+  document.getElementById('tab-paste').style.color=isPaste?'#fff':'var(--text)';
+  document.getElementById('tab-url').style.background=isPaste?'var(--bg)':'var(--primary)';
+  document.getElementById('tab-url').style.color=isPaste?'var(--text)':'#fff';
+}
+function pasteFromClipboard(){
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    navigator.clipboard.readText().then(function(tx){
+      document.getElementById('paste-ta').value=tx;
+    }).catch(function(){toast('⚠️ الصق النص يدوياً (اضغط مطولاً في المربع)');});
+  } else {toast('⚠️ الصق النص يدوياً (اضغط مطولاً في المربع)');}
+}
+function pasteUrlFromClipboard(){
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    navigator.clipboard.readText().then(function(tx){
+      if(tx.startsWith('http'))document.getElementById('url-inp').value=tx;
+      else toast('⚠️ الحافظة لا تحتوي على رابط');
+    }).catch(function(){toast('⚠️ الصق الرابط يدوياً');});
+  } else {toast('⚠️ الصق الرابط يدوياً');}
+}
+function confirmPaste(){
+  var tx=document.getElementById('paste-ta').value.trim();
+  if(!tx){toast('لا يوجد نص');return;}
+  setTxt(tx);closePaste();stats.texts++;sv();
+  toast('✅ تم تحميل النص — اضغط قراءة أو ترجمة');
+}
+function fetchUrl(){
+  var url=document.getElementById('url-inp').value.trim();
+  if(!url||!url.startsWith('http')){toast('⚠️ أدخل رابطاً صحيحاً');return;}
+  var btn=document.getElementById('fetch-btn');
+  btn.textContent='⏳ جارٍ الجلب…';btn.disabled=true;
+  // نستخدم allorigins كبروكسي مجاني لتجاوز CORS
+  var api='https://api.allorigins.win/get?url='+encodeURIComponent(url);
+  fetch(api)
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var html=d.contents||'';
+    // استخراج النص من HTML
+    var tmp=document.createElement('div');
+    tmp.innerHTML=html;
+    // إزالة السكريبت والستايل
+    tmp.querySelectorAll('script,style,nav,header,footer,aside,iframe,noscript').forEach(function(el){el.remove();});
+    // محاولة إيجاد المحتوى الرئيسي
+    var main=tmp.querySelector('article')||tmp.querySelector('main')||tmp.querySelector('.content')||tmp.querySelector('.article-body')||tmp;
+    var tx=main.innerText||main.textContent||'';
+    // تنظيف
+    tx=tx.replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim();
+    if(tx.length<50){toast('⚠️ لم يتمكن من استخراج النص — جرب النسخ اليدوي');return;}
+    setTxt(tx.substring(0,5000));// حد 5000 حرف
+    closePaste();stats.texts++;sv();
+    toast('✅ تم جلب النص ('+tx.length+' حرف)');
+  })
+  .catch(function(){toast('❌ فشل الجلب — تأكد من الرابط أو جرب النسخ اليدوي');})
+  .finally(function(){btn.textContent='🔗 جلب النص';btn.disabled=false;});
+}
 
 /* FILE */
 function loadTxt(e){
@@ -401,9 +1195,13 @@ function loadTxt(e){
 function loadOCR(e){var f=e.target.files[0];if(!f)return;runOCR(f);}
 
 function cleanOCR(tx){
+  tx=tx.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   tx=tx.replace(/[ \t]{2,}/g,' ');
-  tx=tx.replace(/\n{3,}/g,'\n\n');
   tx=tx.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+  // دمج أسطر الفقرة الواحدة: إذا السطر لا ينتهي بنقطة/فاصلة كبيرة → وصله بالتالي
+  tx=tx.replace(/([^\.\!\?\n،؛\:]{2})\n(?!\n)/g,'$1 ');
+  // فقرات متعددة: أبقِ سطراً فارغاً واحداً
+  tx=tx.replace(/\n{2,}/g,'\n\n');
   return tx.trim();
 }
 
@@ -433,66 +1231,93 @@ function runOCRBlob(blob){
     ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
     ctx.drawImage(img,0,0,w,h);
     var b64=canvas.toDataURL('image/jpeg',0.75);
-    document.getElementById('ofill').style.width='40%';
+    document.getElementById('ofill').style.width='30%';
     document.getElementById('ost').textContent='جارٍ استخراج النص…';
     var lf=document.getElementById('lf');
     var langVal=lf?lf.value:'en';
     var langMap={ar:'ara',en:'eng',fr:'fre',es:'spa',de:'ger',tr:'tur'};
-    var ocrLang=langMap[langVal]||'eng';
-    var fd=new FormData();
-    fd.append('apikey','helloworld');
-    fd.append('base64Image',b64);
-    fd.append('language',ocrLang);
-    fd.append('isOverlayRequired','false');
-    var isAr=ocrLang==='ara';
-    fd.append('OCREngine',isAr?'1':'2');
-    fd.append('scale','true');
-    fd.append('detectOrientation','true');
-    if(isAr)fd.append('isTable','false');
-    var done=false;
-    var maxTime=isAr?45000:25000;
-    var timer=setTimeout(function(){if(done)return;done=true;pg.style.display='none';toast('❌ انتهت المهلة — جرب صورة أوضح');},maxTime);
-    // للعربية نجرب OCR.space Engine 1 أولاً
-    var ocrUrl='https://api.ocr.space/parse/image';
-    fetch(ocrUrl,{method:'POST',body:fd})
-    .then(function(res){if(!res.ok)throw new Error('HTTP '+res.status);return res.json();})
-    .then(function(d){
-      if(done)return;
-      var tx='';
-      if(d.ParsedResults&&d.ParsedResults[0])tx=(d.ParsedResults[0].ParsedText||'').trim();
-      // إذا نجح OCR.space
-      if(tx&&tx.length>5&&!d.IsErroredOnProcessing){
-        done=true;clearTimeout(timer);pg.style.display='none';
-        document.getElementById('etxt').value=cleanOCR(tx);
-        toast('✅ تم استخراج النص — اضغط قراءة');stats.texts++;sv();
-        return;
+
+    // دالة مساعدة لإرسال طلب OCR
+    function ocrRequest(ocrLang){
+      var fd=new FormData();
+      fd.append('apikey','helloworld');
+      fd.append('base64Image',b64);
+      fd.append('language',ocrLang);
+      fd.append('isOverlayRequired','false');
+      fd.append('OCREngine',ocrLang==='ara'?'1':'2');
+      fd.append('scale','true');
+      fd.append('detectOrientation','true');
+      if(ocrLang==='ara')fd.append('isTable','false');
+      return fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd})
+        .then(function(res){if(!res.ok)throw new Error('خطأ '+res.status);return res.json();})
+        .then(function(d){
+          if(d.IsErroredOnProcessing)return '';
+          return (d.ParsedResults&&d.ParsedResults[0])?cleanOCR(d.ParsedResults[0].ParsedText||''):'';
+        }).catch(function(){return '';});
+    }
+
+    // دالة تقييم جودة النص: تعدّ الأحرف الصالحة وتحسم الـ garbage
+    function scoreText(tx,expectedArabic){
+      if(!tx||tx.length<3)return 0;
+      var arChars=(tx.match(/[\u0600-\u06FF]/g)||[]).length;
+      var latinChars=(tx.match(/[a-zA-Z]/g)||[]).length;
+      var total=tx.replace(/\s/g,'').length||1;
+      if(expectedArabic){
+        // نكافئ الأحرف العربية ونعاقب اللاتينية الكثيرة في نص عربي
+        return (arChars*2 - latinChars)/total;
+      } else {
+        return (latinChars*2 - arChars)/total;
       }
-      // إذا فشل — نجرب OCR.space مع مفتاح آخر وEngine مختلف
-      if(done)return;
-      document.getElementById('ost').textContent='جارٍ إعادة المحاولة…';
-      var fd2=new FormData();
-      fd2.append('apikey','K81625539988957');
-      fd2.append('base64Image',b64);
-      fd2.append('language',ocrLang);
-      fd2.append('isOverlayRequired','false');
-      fd2.append('OCREngine','1');
-      fd2.append('scale','true');
-      fd2.append('detectOrientation','true');
-      return fetch(ocrUrl,{method:'POST',body:fd2})
-      .then(function(res2){return res2.json();})
-      .then(function(d2){
+    }
+
+    var done=false;
+    var maxTime=50000;
+    var timer=setTimeout(function(){if(done)return;done=true;pg.style.display='none';toast('❌ انتهت المهلة — جرب صورة أوضح');},maxTime);
+
+    if(langVal==='auto'){
+      // وضع التلقائي: نجرب العربي والإنجليزي/اللاتيني معاً ونختار الأفضل
+      document.getElementById('ost').textContent='🔍 اكتشاف اللغة تلقائياً…';
+      document.getElementById('ofill').style.width='20%';
+      Promise.all([ocrRequest('ara'),ocrRequest('eng')])
+        .then(function(results){
+          if(done)return;done=true;clearTimeout(timer);pg.style.display='none';
+          var arTx=results[0];var enTx=results[1];
+          var arScore=scoreText(arTx,true);
+          var enScore=scoreText(enTx,false);
+          var best=arScore>=enScore?arTx:enTx;
+          if(best){
+            document.getElementById('etxt').value=best;
+            document.getElementById('fix-btn').style.display='flex';
+            document.getElementById('extra-row').style.display='flex';
+            // نكتشف اللغة الفعلية من النص المستخرج بدل الافتراض
+            var langNames={ar:'عربي',en:'إنجليزي',fr:'فرنسي',es:'إسباني',de:'ألماني',tr:'تركي'};
+            var detectedLang=detLang(best);
+            var langLabel=langNames[detectedLang]||detectedLang;
+            toast('✅ تم الاستخراج ('+langLabel+') — اضغط قراءة');
+            stats.texts++;sv();
+          } else {
+            toast('⚠️ لا نص — تأكد من وضوح الصورة');
+          }
+        }).catch(function(){if(done)return;done=true;clearTimeout(timer);pg.style.display='none';toast('❌ خطأ في الاتصال');});
+    } else {
+      // لغة محددة
+      var ocrLang=langMap[langVal]||'eng';
+      var isAr=ocrLang==='ara';
+      if(isAr)document.getElementById('ofill').style.width='40%';
+      ocrRequest(ocrLang).then(function(tx){
         if(done)return;done=true;clearTimeout(timer);pg.style.display='none';
-        var tx2='';
-        if(d2.ParsedResults&&d2.ParsedResults[0])tx2=(d2.ParsedResults[0].ParsedText||'').trim();
-        if(tx2&&tx2.length>5){
-          document.getElementById('etxt').value=cleanOCR(tx2);
-          toast('✅ تم استخراج النص — اضغط قراءة');stats.texts++;sv();
-        } else {
-          toast('⚠️ لم يُعثر على نص — تأكد من وضوح الصورة واختيار اللغة الصحيحة');
-        }
-      });
-    })
-    .catch(function(e){if(done)return;done=true;clearTimeout(timer);pg.style.display='none';toast('❌ '+e.message);});
+        if(tx){
+          document.getElementById('etxt').value=tx;
+          document.getElementById('fix-btn').style.display='flex';
+          document.getElementById('extra-row').style.display='flex';
+          var langNames={ar:'عربي',en:'إنجليزي',fr:'فرنسي',es:'إسباني',de:'ألماني',tr:'تركي'};
+          var detectedLang=detLang(tx);
+          var langLabel=langNames[detectedLang]||detectedLang;
+          toast('✅ تم الاستخراج ('+langLabel+') — اضغط قراءة');
+          stats.texts++;sv();
+        } else {toast('⚠️ لا نص — تأكد من وضوح الصورة واللغة');}
+      }).catch(function(e){if(done)return;done=true;clearTimeout(timer);pg.style.display='none';toast('❌ '+e.message);});
+    }
   };
   img.onerror=function(){pg.style.display='none';toast('❌ خطأ في قراءة الصورة');};
   img.src=url;
@@ -504,23 +1329,253 @@ function doTrans(){
   var tx=document.getElementById('etxt').value.trim();
   if(!tx){toast('لا يوجد نص');return;}
   var f=document.getElementById('lf').value;
-  if(f==='auto')f='ar';
+  if(f==='auto')f=detLangCode(tx);
   var t=document.getElementById('lt').value;
   if(f===t){toast('اللغتان متطابقتان');return;}
+  origText=tx;
   toast('🌐 جارٍ الترجمة…');
-  fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(tx)+'&langpair='+f+'|'+t)
+  if(GROQ_KEY){
+    transWithGroq(tx,f,t);
+  } else {
+    transWithChunks(tx,f,t);
+  }
+}
+
+function detLangCode(tx){
+  return detLang(tx); // يستخدم نفس الدالة المحسّنة
+}
+
+function transWithGroq(tx,f,t){
+  var langNames={ar:'العربية',en:'الإنجليزية',fr:'الفرنسية',es:'الإسبانية',de:'الألمانية',tr:'التركية'};
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+    body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      max_tokens:3000,
+      messages:[
+        {role:'system',content:'أنت مترجم محترف. ترجم النص المُعطى من '+( langNames[f]||f)+' إلى '+(langNames[t]||t)+' بدقة وأسلوب طبيعي. أعد النص المترجم فقط بدون تعليق أو مقدمة.'},
+        {role:'user',content:tx}
+      ]
+    })
+  })
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(function(d){
+    var tr=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+    if(tr&&tr.trim()){
+      setTxt(tr.trim());stats.trans++;trackDaily('trans');sv();
+      document.getElementById('undo-btn').style.display='flex';
+      document.getElementById('extra-row').style.display='flex';
+      toast('✅ تمت الترجمة بـ Groq');
+    } else {toast('⚠️ فشلت الترجمة');}
+  })
+  .catch(function(){transWithChunks(tx,f,t);});// fallback للتقطيع
+}
+
+function transWithChunks(tx,f,t){
+  // تقسيم إلى جمل ≤450 حرف
+  var chunks=[],cur='',sentences=tx.split(/(?<=[.!?\n،؛])\s*/);
+  for(var i=0;i<sentences.length;i++){
+    var s=sentences[i];if(!s.trim())continue;
+    if((cur+s).length>440){if(cur)chunks.push(cur.trim());cur=s;}
+    else{cur+=(cur?' ':'')+s;}
+  }
+  if(cur.trim())chunks.push(cur.trim());
+  if(!chunks.length)chunks=[tx.substring(0,440)];
+  var results=[],idx=0;
+  function next(){
+    if(idx>=chunks.length){
+      setTxt(results.join('\n'));stats.trans++;sv();
+      document.getElementById('undo-btn').style.display='flex';
+      document.getElementById('extra-row').style.display='flex';
+      toast('✅ تمت الترجمة');
+      return;
+    }
+    var chunk=chunks[idx];
+    toast('🌐 ترجمة ('+(idx+1)+'/'+chunks.length+')…');
+    fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(chunk)+'&langpair='+f+'|'+t)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var tr=d&&d.responseData&&d.responseData.translatedText;
+      // تجاهل رسائل الخطأ من MyMemory
+      if(tr&&tr.indexOf('QUERY LENGTH')===-1&&tr.indexOf('MYMEMORY')===-1){
+        results.push(tr);
+      } else {
+        results.push(chunk);// احتفظ بالأصل إذا فشل
+      }
+      idx++;setTimeout(next,350);
+    })
+    .catch(function(){results.push(chunk);idx++;setTimeout(next,350);});
+  }
+  next();
+}
+
+function undoTrans(){
+  if(!origText){toast('لا يوجد نص أصلي محفوظ');return;}
+  setTxt(origText);
+  origText='';
+  document.getElementById('undo-btn').style.display='none';
+  // إذا لم يعد هناك شيء في extra-row أخفه
+  if(document.getElementById('fix-btn').style.display==='none'){
+    document.getElementById('extra-row').style.display='none';
+  }
+  toast('↩ تم استعادة النص الأصلي');
+}
+
+/* تصحيح OCR */
+function fixOCR(){
+  var tx=document.getElementById('etxt').value.trim();
+  if(!tx){toast('لا يوجد نص');return;}
+  var btn=document.getElementById('fix-btn');
+  btn.textContent='⏳ جارٍ التصحيح…';
+  btn.disabled=true;
+  if(GROQ_KEY){
+    fixWithGroq(tx,btn);
+  } else {
+    fixWithTranslation(tx,btn);
+  }
+}
+
+/* التصحيح عبر Groq (جودة عالية) */
+function fixWithGroq(tx,btn){
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+GROQ_KEY
+    },
+    body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      max_tokens:2000,
+      messages:[
+        {role:'system',content:'أنت مصحح نصوص عربية متخصص في إصلاح أخطاء OCR. مهمتك: صحّح الحروف المقلوبة والكلمات المشوهة الناتجة عن OCR دون تغيير المعنى. أعد النص المصحح فقط بدون أي تعليق أو مقدمة أو علامة اقتباس.'},
+        {role:'user',content:'صحّح هذا النص:\n'+tx}
+      ]
+    })
+  })
+  .then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.json();
+  })
+  .then(function(d){
+    var fixed=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+    if(fixed&&fixed.trim()){
+      if(!origText)origText=tx;
+      setTxt(fixed.trim());
+      document.getElementById('undo-btn').style.display='flex';
+      document.getElementById('extra-row').style.display='flex';
+      toast('✅ تم التصحيح بـ Groq AI');
+    } else {toast('⚠️ لم يتمكن من التصحيح');}
+  })
+  .catch(function(e){
+    toast('❌ Groq: '+(e.message||'خطأ'));
+  })
+  .finally(function(){btn.textContent='🤖 تصحيح بالذكاء الاصطناعي';btn.disabled=false;});
+}
+
+/* التصحيح عبر الترجمة الدورية مع تقسيم ذكي (مجاني بدون مفتاح) */
+function fixWithTranslation(tx,btn){
+  // تقسيم النص إلى أجزاء أصغر من 450 حرف
+  var chunks=[];
+  var sentences=tx.split(/(?<=[.،؟!\n])\s*/);
+  var cur='';
+  for(var i=0;i<sentences.length;i++){
+    var s=sentences[i];
+    if(!s.trim())continue;
+    if((cur+s).length>440){
+      if(cur)chunks.push(cur.trim());
+      cur=s;
+    } else {
+      cur+=(cur?' ':'')+s;
+    }
+  }
+  if(cur.trim())chunks.push(cur.trim());
+  if(!chunks.length)chunks=[tx.substring(0,440)];
+
+  var results=[];
+  var idx=0;
+  btn.textContent='⏳ ('+idx+'/'+chunks.length+')…';
+
+  function processNext(){
+    if(idx>=chunks.length){
+      var fixed=results.join(' ');
+      if(!origText)origText=tx;
+      setTxt(fixed);
+      document.getElementById('undo-btn').style.display='flex';
+      document.getElementById('extra-row').style.display='flex';
+      toast('✅ تم التصحيح — للنتائج الأفضل أضف مفتاح Groq');
+      btn.textContent='🤖 تصحيح بالذكاء الاصطناعي';
+      btn.disabled=false;
+      return;
+    }
+    var chunk=chunks[idx];
+    btn.textContent='⏳ ('+(idx+1)+'/'+chunks.length+')…';
+    // ترجمة عربي → إنجليزي
+    fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(chunk)+'&langpair=ar|en')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var en=d&&d.responseData&&d.responseData.translatedText;
+      if(!en||en.indexOf('QUERY')===0)throw new Error('حد الطول');
+      // ترجمة إنجليزي → عربي
+      return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(en)+'&langpair=en|ar');
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var ar=d&&d.responseData&&d.responseData.translatedText;
+      results.push(ar&&ar.indexOf('QUERY')!==0?ar:chunk);
+      idx++;
+      setTimeout(processNext,400); // تأخير بسيط لتجنب rate limit
+    })
+    .catch(function(){
+      results.push(chunk); // في حال الخطأ: احتفظ بالأصل
+      idx++;
+      setTimeout(processNext,400);
+    });
+  }
+  processNext();
+}
+
+function trWord(w,f,t,ctx){
+  // مع Groq: نرسل الكلمة مع سياق الجملة للحصول على ترجمة دقيقة
+  if(GROQ_KEY){
+    var prompt=ctx
+      ? 'الجملة: "'+ctx+'"\nالكلمة المطلوب ترجمتها: "'+w+'"\nأعطني ترجمة الكلمة فقط في سياق الجملة من '+f+' إلى '+t+'. الجواب: كلمة أو عبارة قصيرة فقط بدون أي تفسير.'
+      : 'ترجم هذه الكلمة من '+f+' إلى '+t+': "'+w+'". أجب بكلمة أو عبارة قصيرة فقط.';
+    return fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+      body:JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        max_tokens:60,
+        messages:[{role:'user',content:prompt}]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var tr=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+      return tr?tr.trim().replace(/^["'«»]+|["'«»]+$/g,''):'—';
+    })
+    .catch(function(){return trWordMyMemory(w,f,t,ctx);});
+  }
+  return trWordMyMemory(w,f,t,ctx);
+}
+
+function trWordMyMemory(w,f,t,ctx){
+  // نرسل الجملة كاملة إذا كانت متاحة للحصول على ترجمة أدق
+  var query=ctx&&ctx.length<=400?ctx:w;
+  var langPair=f+'|'+t;
+  return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(query)+'&langpair='+langPair)
   .then(function(r){return r.json();})
   .then(function(d){
     var tr=d&&d.responseData&&d.responseData.translatedText;
-    if(tr){setTxt(tr);stats.trans++;sv();toast('✅ تمت الترجمة');}
-    else{toast('⚠️ فشلت الترجمة');}
-  }).catch(function(){toast('❌ خطأ في الاتصال');});
-}
-
-function trWord(w,f,t){
-  return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(w)+'&langpair='+f+'|'+t)
-  .then(function(r){return r.json();})
-  .then(function(d){return (d&&d.responseData&&d.responseData.translatedText)||'—';})
+    if(!tr||tr.indexOf('MYMEMORY')===0||tr.indexOf('QUERY')===0)return '—';
+    // إذا ترجمنا الجملة: استخرج الكلمة المقابلة من الترجمة (أو أعطِ الترجمة الكاملة)
+    if(ctx&&ctx!==w&&tr.length>40){
+      // عرض جزء من الترجمة كسياق
+      return '≈ '+tr.substring(0,60)+(tr.length>60?'…':'');
+    }
+    return tr;
+  })
   .catch(function(){return '—';});
 }
 
@@ -529,38 +1584,37 @@ function send2Read(){
   var tx=document.getElementById('etxt').value.trim();
   if(!tx){toast('لا يوجد نص');return;}
   buildReader(tx);
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-  document.getElementById('panel-reader').classList.add('active');
-  document.querySelectorAll('.tab-btn')[1].classList.add('active');
-  toast('📖 تم الإرسال للقراءة');
+  swTab('reader',null,false);
+  // حفظ النص في المكتبة (أحدث أولاً، حد أقصى 10 نصوص)
+  var title=tx.substring(0,40)+(tx.length>40?'…':'');
+  var lang=detLang(tx);
+  savedTexts=savedTexts.filter(function(t){return t.text!==tx;});
+  savedTexts.unshift({title:title,text:tx,lang:lang,date:Date.now()});
+  if(savedTexts.length>10)savedTexts=savedTexts.slice(0,10);
+  sv();
+  toast('📖 تم الإرسال للقراءة وحُفظ');
 }
 
 function buildReader(tx){
   var area=document.getElementById('ra');
-
-  // تنظيف النص من \r وتوحيد فواصل الأسطر
   tx=tx.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-
-  // اكتشاف اتجاه النص — عربي أو لاتيني
   var isRTL=/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(tx);
   var dir=isRTL?'rtl':'ltr';
-  var align=isRTL?'right':'left';
 
-  // تقسيم النص إلى فقرات
+  // بناء قاموس المفردات المحفوظة للبحث السريع
+  var savedWords={};
+  vocab.forEach(function(v){
+    if(v.word)savedWords[v.word.toLowerCase().trim()]=v.trans||'';
+  });
+
   var paras=tx.split(/\n+/);
   var html='';
-
   paras.forEach(function(para){
     if(!para.trim())return;
-
-    // اكتشاف اتجاه كل فقرة على حدة
     var pRTL=/[\u0600-\u06FF]/.test(para);
     var pDir=pRTL?'rtl':'ltr';
     var pAlign=pRTL?'right':'left';
-
     html+='<p class="line" style="direction:'+pDir+';text-align:'+pAlign+';margin-bottom:.7em;">';
-
     var toks=para.split(/(\s+)/);
     toks.forEach(function(tok){
       if(/^\s+$/.test(tok)){
@@ -568,7 +1622,12 @@ function buildReader(tx){
       } else {
         var cl=tok.replace(/[.,،؟?!؛;:"""''()$$$$«»\-]/g,'');
         if(!cl){html+=esc(tok);}
-        else{html+='<span class="word" data-w="'+esc(cl)+'">'+esc(tok)+'</span>';}
+        else {
+          var isSaved=savedWords.hasOwnProperty(cl.toLowerCase());
+          var cls='word'+(isSaved?' word-saved':'');
+          var extra=isSaved?' title="'+esc(savedWords[cl.toLowerCase()])+'"':'';
+          html+='<span class="'+cls+'" data-w="'+esc(cl)+'"'+extra+'>'+esc(tok)+'</span>';
+        }
       }
     });
     html+='</p>';
@@ -576,9 +1635,9 @@ function buildReader(tx){
 
   area.innerHTML=html||'<p style="color:var(--muted)">لا يوجد نص</p>';
   area.style.fontSize=fs+'px';
-  area.style.direction=dir;
-
-  // أحداث النقر على الكلمات
+  // تخزين hash النص الحالي وتحميل ملاحظاته
+  currentTextHash=textHash(tx);
+  loadNotes();
   area.querySelectorAll('.word').forEach(function(el){
     el.addEventListener('click',function(){wClick(this);});
   });
@@ -588,41 +1647,96 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 
 function wClick(el){
   var w=el.dataset.w;if(!w)return;
-  cW=w;cL=detLang(w);
+  cW=w;
+  // نكتشف اللغة من النص الكامل وليس من الكلمة المفردة
+  var fullTx=document.getElementById('ra').innerText.trim();
+  cL=fullTx?detLang(fullTx):detLang(w);
   var tl=document.getElementById('lt').value;
-  if(tl===cL)tl='ar';
+  if(tl==='auto'||tl===cL)tl='ar';
+  // استخراج سياق الجملة لترجمة أدق
+  var ctx='';
+  var parentLine=el.closest('.line');
+  if(parentLine)ctx=parentLine.innerText.trim();
   document.getElementById('ppw').textContent=w;
   document.getElementById('ppt').textContent='جارٍ الترجمة…';
   document.getElementById('pop').style.display='flex';
-  trWord(w,cL,tl).then(function(t){cT=t;document.getElementById('ppt').textContent=t;});
+  trWord(w,cL,tl,ctx).then(function(t){
+    cT=t;
+    document.getElementById('ppt').textContent=t;
+  });
 }
 
 function detLang(t){
+  if(!t)return 'en';
   if(/[\u0600-\u06FF]/.test(t))return 'ar';
-  if(/[àâçèéêëîïôùûü]/i.test(t))return 'fr';
-  if(/[áéíóúüñ]/i.test(t))return 'es';
-  if(/[äöüß]/i.test(t))return 'de';
+  if(/[ğşıİŞĞ]/.test(t))return 'tr';
+  // الألمانية: ß أو حروف مميزة بدون حروف فرنسية أو إسبانية
+  if(/ß/.test(t))return 'de';
+  if(/[äöÄÖ]/.test(t)&&!/[àâçèéêëîïôùûüœæñ]/i.test(t))return 'de';
+  if(/[ñÑ¿¡]/.test(t))return 'es';
+  // كلمات إسبانية (قبل الفرنسية)
+  var w=t.toLowerCase();
+  var esW=['está','están','también','comprensión','adquisición','educación','aprender','estudiantes','pueden','manera','interactiva','vocabulario','mejora','revolución','notablemente','ahora','idiomas'];
+  var esC=0;for(var i=0;i<esW.length;i++){if(w.indexOf(esW[i])!==-1)esC++;}
+  if(esC>=2)return 'es';
+  // كلمات ألمانية
+  var deW=['die','der','das','und','ist','sind','werden','können','nicht','auch','mit','eine','einem','einer','wird','haben','für','oder'];
+  var deC=0;for(var k=0;k<deW.length;k++){if(w.indexOf(' '+deW[k]+' ')!==-1)deC++;}
+  if(deC>=3)return 'de';
+  // الفرنسية
+  if(/[àâçèéêëîïôùûüœæÀÂÇÈÉÊËÎÏÔÙÛÜŒÆ]/i.test(t))return 'fr';
+  var frW=['les','des','une','dans','pour','avec','sont','cette','aussi','même','très','mais','plus','bien','peut'];
+  var frC=0;for(var j=0;j<frW.length;j++){if(w.indexOf(' '+frW[j]+' ')!==-1)frC++;}
+  if(frC>=2)return 'fr';
   return 'en';
 }
 
 function clsPop(){document.getElementById('pop').style.display='none';}
 function spkPop(){spk(cW,cL);stats.spoken++;sv();}
+function refreshVocabHighlight(){
+  var savedWords={};
+  vocab.forEach(function(v){if(v.word)savedWords[v.word.toLowerCase().trim()]=v.trans||'';});
+  document.getElementById('ra').querySelectorAll('.word').forEach(function(el){
+    var w=(el.dataset.w||'').toLowerCase();
+    if(savedWords.hasOwnProperty(w)){
+      el.classList.add('word-saved');
+      el.title=savedWords[w];
+    } else {
+      el.classList.remove('word-saved');
+      el.removeAttribute('title');
+    }
+  });
+}
+
 function savPop(){
   if(!cW||!cT)return;
+  var cleanT=cT.replace(/^≈\s*/,'').replace(/…$/,'').trim();
   for(var i=0;i<vocab.length;i++){if(vocab[i].word===cW){toast('محفوظة مسبقاً');clsPop();return;}}
-  vocab.push({word:cW,trans:cT,lang:cL});sv();refVocab();
+  vocab.push({word:cW,trans:cleanT,lang:cL});
+  trackDaily('vocab');
+  sv();refVocab();
+  refreshVocabHighlight();
   toast('✅ تم حفظ: '+cW);clsPop();
 }
 
 /* TTS */
 var ttsFullText='';
-var ttsAudio=null; // مرجع عالمي للصوت الحالي
 
 function getBestVoice(langCode){
   var voices=window.speechSynthesis.getVoices();
   if(!voices.length)return null;
+  // تطابق تام أولاً
   var v=voices.find(function(v){return v.lang===langCode;});
   if(v)return v;
+  // للعربية: نجرب كل اللهجات
+  if(langCode.startsWith('ar')){
+    var arV=['ar-SA','ar-EG','ar-DZ','ar-MA','ar-AE','ar-IQ','ar-KW','ar-LB','ar'];
+    for(var i=0;i<arV.length;i++){
+      var f=voices.find(function(v){return v.lang===arV[i];});
+      if(f)return f;
+    }
+    return voices.find(function(v){return v.lang.startsWith('ar');})||null;
+  }
   var base=langCode.split('-')[0];
   return voices.find(function(v){return v.lang.startsWith(base);})||null;
 }
@@ -634,7 +1748,6 @@ function getRVoice(lang){
 }
 
 function gtTTS(text,lang,onEnd){
-  if(ttsAudio){ttsAudio.pause();ttsAudio=null;}
   var sentences=text.match(/[^.!?\u061F\u060C,\n]+[.!?\u061F\u060C,\n]*/g)||[text];
   var chunks=[],cur='';
   for(var i=0;i<sentences.length;i++){
@@ -643,25 +1756,32 @@ function gtTTS(text,lang,onEnd){
   }
   if(cur.trim())chunks.push(cur.trim());
   if(!chunks.length){if(onEnd)onEnd();return;}
-  var ci=0,failCount=0;
+  var ci=0;
+  var failCount=0;
   function next(){
-    if(!ttsOn){if(onEnd)onEnd();return;}
     if(ci>=chunks.length){if(onEnd)onEnd();return;}
     var url='https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl='+lang+'&q='+encodeURIComponent(chunks[ci]);
     var a=new Audio(url);
-    ttsAudio=a;
-    var pct=Math.round(((ci+1)/chunks.length)*100);
-    document.getElementById('rfill').style.width=pct+'%';
-    document.getElementById('ppc').textContent=pct+'%';
+    a.oncanplaythrough=function(){a.play().catch(function(){failCount++;ci++;next();});};
+    a.onended=function(){failCount=0;ci++;next();};
+    a.onerror=function(){
+      failCount++;
+      if(failCount>=3){
+        // Google TTS محجوب — نوقف
+        if(onEnd)onEnd();
+        toast('\u26A0\uFE0F تعذّر نطق العربية — جرب مع VPN أو اتصال آخر');
+        return;
+      }
+      ci++;next();
+    };
     ci++;
-    var t=setTimeout(function(){failCount++;if(failCount>=3){if(onEnd)onEnd();toast('\u26A0\uFE0F تعذّر نطق العربية');}else{next();}},10000);
-    a.onended=function(){clearTimeout(t);failCount=0;next();};
-    a.onerror=function(){clearTimeout(t);failCount++;if(failCount>=3){if(onEnd)onEnd();toast('\u26A0\uFE0F تعذّر نطق العربية');}else{next();}};
-    a.play().catch(function(){clearTimeout(t);failCount++;if(failCount>=3){if(onEnd)onEnd();}else{next();}});
+    // timeout لكل جزء
+    var t=setTimeout(function(){a.onerror&&a.onerror();},8000);
+    a.onended=function(){clearTimeout(t);failCount=0;ci++;next();};
+    a.load();
   }
   next();
 }
-
 
 function spk(tx,lang){
   if(!window.speechSynthesis){toast('المتصفح لا يدعم النطق');return;}
@@ -669,79 +1789,106 @@ function spk(tx,lang){
   var langCode=loc(lang);
   function go(){
     var voice=getBestVoice(langCode);
-    if(voice){var u=new SpeechSynthesisUtterance(tx);u.lang=langCode;u.rate=spd;u.voice=voice;window.speechSynthesis.speak(u);}
-    else if(typeof responsiveVoice!=='undefined'&&responsiveVoice.voiceSupport()){responsiveVoice.speak(tx,getRVoice(langCode),{rate:spd-0.5});}
-    else{gtTTS(tx,langCode.split('-')[0],null);}
+    var u=new SpeechSynthesisUtterance(tx);
+    u.lang=langCode;u.rate=spd;
+    if(voice)u.voice=voice;
+    var started=false;
+    var failTimer=setTimeout(function(){
+      if(!started){
+        window.speechSynthesis.cancel();
+        // Fallback: ResponsiveVoice
+        if(typeof responsiveVoice!=='undefined'&&responsiveVoice.voiceSupport()){
+          responsiveVoice.speak(tx,getRVoice(langCode),{rate:Math.max(0,Math.min(1,spd-0.5))});
+        } else {
+          gtTTS(tx,langCode.split('-')[0],null);
+        }
+      }
+    },2000);
+    u.onstart=function(){started=true;clearTimeout(failTimer);};
+    u.onerror=function(){
+      clearTimeout(failTimer);
+      if(!started){
+        if(typeof responsiveVoice!=='undefined'&&responsiveVoice.voiceSupport()){
+          responsiveVoice.speak(tx,getRVoice(langCode),{rate:Math.max(0,Math.min(1,spd-0.5))});
+        } else {
+          gtTTS(tx,langCode.split('-')[0],null);
+        }
+      }
+    };
+    window.speechSynthesis.speak(u);
   }
   var v=window.speechSynthesis.getVoices();
   if(v.length){go();}else{window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.onvoiceschanged=null;go();};setTimeout(go,1000);}
 }
 
 function togTTS(){
-  var tx=document.getElementById('ra').innerText.trim();
-  if(!tx){toast('لا يوجد نص');return;}
-
-  // إذا كان يعمل — أوقفه
-  var existing=document.getElementById('tts-audio');
-  if(existing && !existing.paused){
-    existing.pause();
-    existing.currentTime=0;
-    ttsOn=false;
-    document.getElementById('pbtn').textContent='▶ استماع';
+  if(!window.speechSynthesis){toast('المتصفح لا يدعم النطق');return;}
+  if(ttsOn){
+    window.speechSynthesis.cancel();
+    if(typeof responsiveVoice!=='undefined')responsiveVoice.cancel();
+    ttsOn=false;document.getElementById('pbtn').textContent='\u25B6 استماع';
     document.querySelectorAll('.word.tts-active').forEach(function(el){el.classList.remove('tts-active');});
-    document.getElementById('rfill').style.width='0%';
-    document.getElementById('ppc').textContent='0%';
+    document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';
     return;
   }
-
-  var lang=loc(detLang(tx));
-
-  // تقسيم النص إلى جمل
+  var tx=document.getElementById('ra').innerText.trim();
+  if(!tx){toast('لا يوجد نص');return;}
   ttsFullText=tx;
-  var chunk=tx.substring(0,200);
-  var url='https://translate.google.com/translate_tts?ie=UTF-8&q='
-    +encodeURIComponent(chunk)+'&tl='+lang.split('-')[0]+'&client=tw-ob';
-
-  var audio=document.getElementById('tts-audio');
-  if(!audio){
-    audio=document.createElement('audio');
-    audio.id='tts-audio';
-    document.body.appendChild(audio);
+  var lang=loc(detLang(tx));
+  function go(){
+    var voice=getBestVoice(lang);
+    ttsOn=true;document.getElementById('pbtn').textContent='\u23F9 إيقاف';
+    ttsU=new SpeechSynthesisUtterance(tx);
+    ttsU.lang=lang;
+    ttsU.rate=spd;
+    if(voice)ttsU.voice=voice;
+    var started=false;
+    var errored=false;
+    // مؤقت أطول (5 ثوانٍ) لأن Android يحتاج وقتاً لتحميل الصوت
+    var failTimer=setTimeout(function(){
+      if(!started&&ttsOn&&!errored){
+        errored=true;
+        window.speechSynthesis.cancel();
+        ttsOn=false;
+        useFallbackTTS(tx,lang);
+      }
+    },5000);
+    ttsU.onboundary=function(e){
+      started=true;clearTimeout(failTimer);
+      if(e.name!=='word')return;
+      var ci=e.charIndex;
+      document.getElementById('rfill').style.width=Math.round((ci/tx.length)*100)+'%';
+      document.getElementById('ppc').textContent=Math.round((ci/tx.length)*100)+'%';
+      document.querySelectorAll('.word.tts-active').forEach(function(el){el.classList.remove('tts-active');});
+      var words=document.getElementById('ra').querySelectorAll('.word');
+      var acc=0;
+      for(var i=0;i<words.length;i++){var w=words[i].textContent;var pos=tx.indexOf(w,acc);if(pos===-1)continue;if(ci>=pos&&ci<pos+w.length){words[i].classList.add('tts-active');words[i].scrollIntoView({block:'nearest',behavior:'smooth'});break;}if(pos>ci)break;acc=pos+w.length;}
+    };
+    ttsU.onstart=function(){started=true;clearTimeout(failTimer);};
+    ttsU.onend=function(){
+      clearTimeout(failTimer);
+      ttsOn=false;document.getElementById('pbtn').textContent='\u25B6 استماع';
+      document.querySelectorAll('.word.tts-active').forEach(function(el){el.classList.remove('tts-active');});
+      document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';
+    };
+    ttsU.onerror=function(e){
+      clearTimeout(failTimer);
+      if(e.error==='interrupted'||e.error==='canceled')return;
+      if(!started&&!errored){errored=true;useFallbackTTS(tx,lang);return;}
+      ttsOn=false;document.getElementById('pbtn').textContent='\u25B6 استماع';
+      document.querySelectorAll('.word.tts-active').forEach(function(el){el.classList.remove('tts-active');});
+    };
+    window.speechSynthesis.speak(ttsU);
+    // workaround لـ Chrome Android: أحياناً onstart لا يُطلق رغم أن الصوت يعمل
+    // نتحقق بعد 1 ثانية — إذا كان الـ speaking نشطاً نعتبره بدأ
+    setTimeout(function(){
+      if(!started&&ttsOn&&window.speechSynthesis.speaking){
+        started=true;clearTimeout(failTimer);
+      }
+    },1000);
   }
-
-  audio.src=url;
-
-  audio.onplay=function(){
-    ttsOn=true;
-    document.getElementById('pbtn').textContent='⏹ إيقاف';
-  };
-
-  audio.onended=function(){
-    ttsOn=false;
-    document.getElementById('pbtn').textContent='▶ استماع';
-    document.getElementById('rfill').style.width='100%';
-    document.getElementById('ppc').textContent='100%';
-    document.querySelectorAll('.word.tts-active').forEach(function(el){el.classList.remove('tts-active');});
-  };
-
-  audio.ontimeupdate=function(){
-    var pct=Math.round((audio.currentTime/audio.duration)*100)||0;
-    document.getElementById('rfill').style.width=pct+'%';
-    document.getElementById('ppc').textContent=pct+'%';
-  };
-
-  audio.onerror=function(){
-    ttsOn=false;
-    document.getElementById('pbtn').textContent='▶ استماع';
-    toast('❌ تعذّر تشغيل الصوت');
-  };
-
-  audio.load();
-  audio.play().catch(function(){
-    ttsOn=false;
-    document.getElementById('pbtn').textContent='▶ استماع';
-    toast('❌ تعذّر تشغيل الصوت');
-  });
+  var v=window.speechSynthesis.getVoices();
+  if(v.length){go();}else{window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.onvoiceschanged=null;go();};setTimeout(function(){if(!ttsOn)go();},2000);}
 }
 
 function useFallbackTTS(tx,lang){
@@ -751,20 +1898,23 @@ function useFallbackTTS(tx,lang){
     responsiveVoice.speak(tx,getRVoice(lang),{
       rate:Math.max(0,Math.min(1,spd-0.5)),
       onstart:function(){document.getElementById('rfill').style.width='50%';},
-      onend:function(){ttsOn=false;document.getElementById('pbtn').textContent='▶ استماع';document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';},
+      onend:function(){
+        ttsOn=false;document.getElementById('pbtn').textContent='\u25B6 استماع';
+        document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';
+      },
       onerror:function(){
-        // آخر خيار: Google Translate TTS
-        gtTTS(tx,lang.split('-')[0],function(){
-          ttsOn=false;document.getElementById('pbtn').textContent='▶ استماع';
-          document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';
-        });
+        ttsOn=false;document.getElementById('pbtn').textContent='\u25B6 استماع';
+        document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';
+        // تحذير فقط إذا لا توجد أصوات بالمرة
+        var totalVoices=window.speechSynthesis.getVoices().length;
+        if(totalVoices===0){toast('⚠️ لا توجد أصوات متاحة على هذا الجهاز');}
       }
     });
   } else {
-    gtTTS(tx,lang.split('-')[0],function(){
-      ttsOn=false;document.getElementById('pbtn').textContent='▶ استماع';
-      document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';
-    });
+    ttsOn=false;document.getElementById('pbtn').textContent='\u25B6 استماع';
+    document.getElementById('rfill').style.width='0%';document.getElementById('ppc').textContent='0%';
+    var totalV=window.speechSynthesis.getVoices().length;
+    if(totalV===0){toast('⚠️ لا توجد أصوات متاحة على هذا الجهاز');}
   }
 }
 
@@ -793,6 +1943,349 @@ function refVocab(){
   }).join('');
 }
 function delV(i){vocab.splice(i,1);sv();refVocab();}
+function fixVocabLangs(){
+  if(!vocab.length){toast('لا توجد مفردات');return;}
+  var fixed=0;
+  vocab.forEach(function(v){
+    // نكتشف اللغة من الكلمة + ترجمتها معاً (نص أطول = نتيجة أدق)
+    var sample=v.word+' '+v.word+' '+v.word; // نكرر الكلمة لزيادة الإشارة
+    var detected=detLang(v.word);
+    // إذا الترجمة عربية والكلمة مش عربية → اللغة المكتشفة صحيحة
+    var hasAr=/[\u0600-\u06FF]/.test(v.trans);
+    var wordIsAr=/[\u0600-\u06FF]/.test(v.word);
+    if(hasAr&&!wordIsAr&&v.lang!==detected){
+      v.lang=detected;fixed++;
+    }
+  });
+  // محاولة أذكى: نجمع كل الكلمات لاكتشاف اللغة السائدة
+  var allWords=vocab.filter(function(v){return !/[\u0600-\u06FF]/.test(v.word);}).map(function(v){return v.word;}).join(' ');
+  if(allWords.length>10){
+    var dominantLang=detLang(allWords);
+    if(dominantLang!=='en'&&dominantLang!=='ar'){
+      vocab.forEach(function(v){
+        if(!/[\u0600-\u06FF]/.test(v.word)&&v.lang!==dominantLang){
+          v.lang=dominantLang;fixed++;
+        }
+      });
+    }
+  }
+  sv();refVocab();
+  toast(fixed>0?'✅ تم تصحيح '+fixed+' كلمة':'✅ اللغات صحيحة بالفعل');
+}
+function refLib(){
+  var card=document.getElementById('lib-card');
+  var list=document.getElementById('lib-list');
+  if(!savedTexts||!savedTexts.length){card.style.display='none';return;}
+  card.style.display='block';
+  var langFlags={ar:'🇸🇦',fr:'🇫🇷',en:'🇬🇧',es:'🇪🇸',de:'🇩🇪',tr:'🇹🇷'};
+  list.innerHTML=savedTexts.map(function(t,i){
+    var d=new Date(t.date);
+    var dateStr=d.getDate()+'/'+(d.getMonth()+1);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);cursor:pointer" onclick="loadSavedText('+i+')">'
+      +'<span style="font-size:1.2rem">'+(langFlags[t.lang]||'📄')+'</span>'
+      +'<span style="flex:1;font-size:.85rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.title)+'</span>'
+      +'<span style="font-size:.72rem;color:var(--muted)">'+dateStr+'</span>'
+      +'<button onclick="event.stopPropagation();delSavedText('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:0 2px">🗑️</button>'
+      +'</div>';
+  }).join('');
+}
+function loadSavedText(i){
+  if(!savedTexts[i])return;
+  buildReader(savedTexts[i].text);
+  document.getElementById('etxt').value=savedTexts[i].text;
+  swTab('reader',null,false);
+  toast('📖 تم تحميل: '+savedTexts[i].title);
+}
+function delSavedText(i){
+  savedTexts.splice(i,1);sv();refLib();
+}
+function clrSavedTexts(){
+  if(!confirm('مسح جميع النصوص المحفوظة؟'))return;
+  savedTexts=[];sv();refLib();
+  toast('🗑️ تم مسح النصوص');
+}
+/* ===== دفتر الملاحظات ===== */
+function textHash(tx){
+  // hash بسيط للنص — أول 60 حرف كمعرّف
+  return tx.trim().substring(0,60).replace(/\s+/g,' ');
+}
+function loadNotes(){
+  var ta=document.getElementById('note-ta');
+  var history=document.getElementById('notes-history');
+  if(!ta||!history)return;
+  var h=currentTextHash;
+  var textNotes=notes[h]||[];
+  // أحدث ملاحظة في خانة الكتابة
+  ta.value='';
+  document.getElementById('note-saved-badge').style.display='none';
+  // عرض الملاحظات السابقة
+  if(textNotes.length){
+    history.style.display='flex';
+    history.innerHTML='<p style="font-size:.76rem;color:var(--muted);margin-bottom:4px">📋 الملاحظات السابقة:</p>'+
+    textNotes.map(function(n,i){
+      var d=new Date(n.date);
+      var ds=d.getDate()+'/'+(d.getMonth()+1)+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+      return '<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;position:relative">'
+        +'<div style="font-size:.78rem;color:var(--muted);margin-bottom:4px">'+ds+'</div>'
+        +'<div style="font-size:.88rem;color:var(--text);white-space:pre-wrap;direction:auto;line-height:1.6">'+esc(n.text)+'</div>'
+        +'<button onclick="delNote('+i+')" style="position:absolute;top:6px;left:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem">🗑️</button>'
+        +'</div>';
+    }).join('');
+  } else {
+    history.style.display='none';
+    history.innerHTML='';
+  }
+}
+function onNoteChange(){
+  document.getElementById('note-saved-badge').style.display='none';
+}
+function saveNote(){
+  var ta=document.getElementById('note-ta');
+  var tx=ta.value.trim();
+  if(!tx){toast('اكتب ملاحظة أولاً');return;}
+  if(!currentTextHash){toast('⚠️ افتح نصاً أولاً');return;}
+  if(!notes[currentTextHash])notes[currentTextHash]=[];
+  notes[currentTextHash].unshift({text:tx,date:Date.now()});
+  if(notes[currentTextHash].length>20)notes[currentTextHash]=notes[currentTextHash].slice(0,20);
+  sv();
+  ta.value='';
+  document.getElementById('note-saved-badge').style.display='inline';
+  loadNotes();
+  toast('✅ تم حفظ الملاحظة');
+}
+function clearNote(){
+  document.getElementById('note-ta').value='';
+  document.getElementById('note-saved-badge').style.display='none';
+}
+function delNote(i){
+  if(!currentTextHash||!notes[currentTextHash])return;
+  notes[currentTextHash].splice(i,1);
+  if(!notes[currentTextHash].length)delete notes[currentTextHash];
+  sv();loadNotes();
+}
+function toggleNotes(){
+  var body=document.getElementById('notes-body');
+  var btn=document.getElementById('note-toggle-btn');
+  var hidden=body.style.display==='none';
+  body.style.display=hidden?'block':'none';
+  btn.textContent=hidden?'▲':'▼';
+}
+var wodIdx=-1,wodShown=false;
+var tfIdx=-1,tfCorrect=false,tfOk=0,tfTotal=0;
+var wrIdx=-1,wrOk=0,wrTotal=0;
+
+/* ===== SRS ===== */
+var SRS_INTERVALS=[1,3,7,14];
+var srsQueue=[],srsIdx=0,srsSessionDone=0,srsRevealed=false;
+
+function getSRSDueWords(){
+  var t=new Date();t.setHours(0,0,0,0);
+  return vocab.filter(function(v){
+    if(!v.nextReview)return true;
+    var n=new Date(v.nextReview);n.setHours(0,0,0,0);
+    return n<=t;
+  });
+}
+function initSRS(){
+  srsQueue=getSRSDueWords().slice(0,20);
+  srsIdx=0;srsSessionDone=0;srsRevealed=false;
+  var badge=document.getElementById('srs-badge');
+  var empty=document.getElementById('srs-empty');
+  var content=document.getElementById('srs-content');
+  if(!badge)return;
+  if(!srsQueue.length){
+    badge.textContent='✅ منتهية';badge.style.background='rgba(16,185,129,.12)';badge.style.color='#10b981';
+    empty.style.display='block';content.style.display='none';
+  } else {
+    badge.textContent=srsQueue.length+' كلمة';badge.style.background='rgba(239,68,68,.12)';badge.style.color='#ef4444';
+    empty.style.display='none';content.style.display='block';
+    showSRSCard();
+  }
+}
+function showSRSCard(){
+  if(srsIdx>=srsQueue.length){
+    document.getElementById('srs-content').style.display='none';
+    document.getElementById('srs-empty').style.display='block';
+    document.getElementById('srs-empty').innerHTML='🎉 أحسنت! راجعت <strong>'+srsSessionDone+'</strong> كلمة اليوم';
+    document.getElementById('srs-badge').textContent='✅ منتهية';
+    document.getElementById('srs-badge').style.background='rgba(16,185,129,.12)';
+    document.getElementById('srs-badge').style.color='#10b981';
+    if(srsSessionDone>0){trackDaily('correct',srsSessionDone);sv();}
+    return;
+  }
+  var v=srsQueue[srsIdx];
+  var flags={ar:'🇸🇦',fr:'🇫🇷',en:'🇬🇧',es:'🇪🇸',de:'🇩🇪',tr:'🇹🇷'};
+  document.getElementById('srs-word').textContent=v.word;
+  document.getElementById('srs-lang').textContent=(flags[v.lang]||'🌐')+' '+(v.lang||'');
+  document.getElementById('srs-trans').textContent=v.trans;
+  document.getElementById('srs-answer').style.display='none';
+  document.getElementById('srs-hint').style.display='block';
+  document.getElementById('srs-btns').style.display='none';
+  document.getElementById('srs-progress').textContent=(srsIdx+1)+' / '+srsQueue.length+' · أنجزت: '+srsSessionDone;
+  srsRevealed=false;
+}
+function revSRS(){
+  if(srsRevealed)return;
+  srsRevealed=true;
+  document.getElementById('srs-answer').style.display='block';
+  document.getElementById('srs-hint').style.display='none';
+  document.getElementById('srs-btns').style.display='grid';
+  var v=srsQueue[srsIdx];
+  if(v)spk(v.word,v.lang||detLang(v.word));
+}
+function rateSRS(rating){
+  if(!srsRevealed)return;
+  var v=srsQueue[srsIdx];if(!v)return;
+  var next=new Date();next.setDate(next.getDate()+(SRS_INTERVALS[rating]||1));
+  var nextStr=next.toISOString().split('T')[0];
+  var vi=vocab.findIndex(function(x){return x.word===v.word;});
+  if(vi>=0){
+    vocab[vi].nextReview=nextStr;
+    vocab[vi].srsLevel=Math.min(6,Math.max(0,(vocab[vi].srsLevel||0)+(rating>=2?1:-1)));
+  }
+  sv();
+  if(rating>=1)srsSessionDone++;
+  srsIdx++;showSRSCard();
+}
+
+function initGames(){
+  // كلمة اليوم
+  if(!vocab.length){
+    document.getElementById('wod-empty').style.display='block';
+    document.getElementById('wod-content').style.display='none';
+  } else {
+    document.getElementById('wod-empty').style.display='none';
+    document.getElementById('wod-content').style.display='block';
+    // نختار كلمة ثابتة لليوم (hash اليوم mod عدد الكلمات)
+    var today=new Date();
+    var dayHash=today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
+    if(wodIdx===-1)wodIdx=dayHash%vocab.length;
+    showWod();
+  }
+  // صواب/خطأ
+  if(vocab.length<3){
+    document.getElementById('tf-empty').style.display='block';
+    document.getElementById('tf-content').style.display='none';
+  } else {
+    document.getElementById('tf-empty').style.display='none';
+    document.getElementById('tf-content').style.display='block';
+    if(tfIdx===-1)newTF();
+  }
+  // اكتب الترجمة
+  if(!vocab.length){
+    document.getElementById('wr-empty').style.display='block';
+    document.getElementById('wr-content').style.display='none';
+  } else {
+    document.getElementById('wr-empty').style.display='none';
+    document.getElementById('wr-content').style.display='block';
+    if(wrIdx===-1)newWR();
+  }
+}
+
+/* كلمة اليوم */
+function showWod(){
+  if(!vocab.length)return;
+  var v=vocab[wodIdx%vocab.length];
+  document.getElementById('wod-word').textContent=v.word;
+  document.getElementById('wod-trans').textContent=v.trans;
+  document.getElementById('wod-trans').style.display='none';
+  document.getElementById('wod-btn').textContent='👁️ ترجمة';
+  wodShown=false;
+}
+function newWod(){
+  wodIdx=Math.floor(Math.random()*vocab.length);
+  showWod();
+}
+function toggleWodTrans(){
+  wodShown=!wodShown;
+  document.getElementById('wod-trans').style.display=wodShown?'block':'none';
+  document.getElementById('wod-btn').textContent=wodShown?'🙈 إخفاء':'👁️ ترجمة';
+}
+function wodSpeak(){
+  if(!vocab.length)return;
+  var v=vocab[wodIdx%vocab.length];
+  spk(v.word,v.lang||detLang(v.word));
+}
+
+/* صواب/خطأ */
+function newTF(){
+  if(vocab.length<3)return;
+  document.getElementById('tf-feedback').textContent='';
+  tfIdx=Math.floor(Math.random()*vocab.length);
+  var v=vocab[tfIdx];
+  var useCorrect=Math.random()>0.4; // 60% صحيح
+  tfCorrect=useCorrect;
+  var shownTrans=useCorrect?v.trans:vocab[Math.floor(Math.random()*vocab.length)].trans;
+  document.getElementById('tf-word').textContent=v.word;
+  document.getElementById('tf-trans').textContent=shownTrans;
+}
+function tfAnswer(said){
+  var isRight=(said===tfCorrect);
+  tfTotal++;
+  var fb=document.getElementById('tf-feedback');
+  if(isRight){
+    tfOk++;
+    fb.textContent='✅ صحيح!';
+    fb.style.color='#10b981';
+  } else {
+    fb.textContent='❌ خطأ! الترجمة: '+vocab[tfIdx].trans;
+    fb.style.color='#ef4444';
+  }
+  document.getElementById('tf-score').textContent=tfOk+'/'+tfTotal;
+  setTimeout(newTF,1400);
+}
+
+/* اكتب الترجمة */
+function newWR(){
+  if(!vocab.length)return;
+  document.getElementById('wr-feedback').textContent='';
+  document.getElementById('wr-inp').value='';
+  document.getElementById('wr-inp').style.borderColor='var(--border)';
+  wrIdx=Math.floor(Math.random()*vocab.length);
+  document.getElementById('wr-word').textContent=vocab[wrIdx].word;
+  setTimeout(function(){document.getElementById('wr-inp').focus();},100);
+}
+function wrCheck(){
+  if(wrIdx===-1)return;
+  var inp=document.getElementById('wr-inp').value.trim().toLowerCase();
+  var correct=vocab[wrIdx].trans.trim().toLowerCase();
+  var fb=document.getElementById('wr-feedback');
+  wrTotal++;
+  // مطابقة مرنة (أول 3 أحرف كافية)
+  var isClose=inp===correct||correct.includes(inp)||inp.includes(correct)||(inp.length>=3&&correct.startsWith(inp.substring(0,3)));
+  if(inp===correct){
+    wrOk++;fb.textContent='✅ ممتاز!';fb.style.color='#10b981';
+    document.getElementById('wr-inp').style.borderColor='#10b981';
+    document.getElementById('wr-score').textContent=wrOk+'/'+wrTotal;
+    setTimeout(newWR,1200);
+  } else if(isClose){
+    wrOk++;fb.textContent='👍 قريب! الصحيح: '+vocab[wrIdx].trans;fb.style.color='#f59e0b';
+    document.getElementById('wr-inp').style.borderColor='#f59e0b';
+    document.getElementById('wr-score').textContent=wrOk+'/'+wrTotal;
+    setTimeout(newWR,2000);
+  } else {
+    fb.textContent='❌ الصحيح: '+vocab[wrIdx].trans;fb.style.color='#ef4444';
+    document.getElementById('wr-inp').style.borderColor='#ef4444';
+    document.getElementById('wr-score').textContent=wrOk+'/'+wrTotal;
+    setTimeout(newWR,2200);
+  }
+}
+function wrSkip(){
+  wrTotal++;
+  document.getElementById('wr-score').textContent=wrOk+'/'+wrTotal;
+  newWR();
+}
+function clrVocab(){
+  if(!vocab.length){toast('لا توجد مفردات');return;}
+  if(!confirm('مسح جميع المفردات ('+vocab.length+' كلمة)؟'))return;
+  vocab=[];sv();refVocab();
+  toast('🗑️ تم مسح جميع المفردات');
+}
+function clrStats(){
+  if(!confirm('مسح جميع الإحصائيات؟'))return;
+  stats={texts:0,spoken:0,correct:0,trans:0};sv();refStats();
+  toast('🗑️ تم مسح الإحصائيات');
+}
 function expCSV(){
   if(!vocab.length){toast('لا توجد مفردات');return;}
   var bom='\uFEFF';
@@ -863,6 +2356,78 @@ function markC(knew){
 }
 
 /* STATS */
+function setChartMetric(m){
+  chartMetric=m;
+  ['vocab','trans','correct'].forEach(function(x){
+    var btn=document.getElementById('chart-btn-'+x);
+    if(!btn)return;
+    btn.style.background=x===m?'var(--primary)':'var(--bg)';
+    btn.style.color=x===m?'#fff':'var(--muted)';
+    btn.style.borderColor=x===m?'var(--primary)':'var(--border)';
+  });
+  drawChart();
+}
+function drawChart(){
+  var canvas=document.getElementById('progress-chart');
+  if(!canvas)return;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.offsetWidth||canvas.parentElement.offsetWidth||300;
+  var H=160;
+  canvas.width=W;canvas.height=H;
+  var days=[],labels=[];
+  var dayNames=['أحد','إثن','ثلا','أرب','خمي','جمع','سبت'];
+  for(var i=6;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);
+    var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    days.push(dailyStats[k]?dailyStats[k][chartMetric]||0:0);
+    labels.push(dayNames[d.getDay()]);
+  }
+  var maxVal=Math.max.apply(null,days)||1;
+  var pad={t:16,r:12,b:30,l:30};
+  var cW=W-pad.l-pad.r;var cH=H-pad.t-pad.b;
+  var barW=Math.floor(cW/7*0.6);var gap=Math.floor(cW/7);
+  var isDark=document.body.classList.contains('dark')||document.body.classList.contains('night');
+  ctx.fillStyle=isDark?'#1e293b':'#f8fafc';
+  ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle=isDark?'rgba(255,255,255,.07)':'rgba(0,0,0,.06)';
+  ctx.lineWidth=1;
+  [0.25,0.5,0.75,1].forEach(function(f){
+    var y=pad.t+cH*(1-f);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle=isDark?'rgba(255,255,255,.3)':'rgba(0,0,0,.3)';
+    ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(Math.round(maxVal*f),pad.l-3,y+3);
+  });
+  var colors={vocab:'#6366f1',trans:'#0ea5e9',correct:'#10b981'};
+  var color=colors[chartMetric]||'#6366f1';
+  var bestDay=-1,bestVal=-1;
+  days.forEach(function(val,i){
+    var x=pad.l+i*gap+(gap-barW)/2;
+    var bH=Math.max(2,Math.round(cH*(val/maxVal)));
+    var y=pad.t+cH-bH;
+    var grad=ctx.createLinearGradient(0,y,0,y+bH);
+    grad.addColorStop(0,color);grad.addColorStop(1,color+'88');
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    if(ctx.roundRect)ctx.roundRect(x,y,barW,bH,4);else ctx.rect(x,y,barW,bH);
+    ctx.fill();
+    if(val>0){
+      ctx.fillStyle=isDark?'rgba(255,255,255,.7)':'rgba(0,0,0,.5)';
+      ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+      ctx.fillText(val,x+barW/2,y-3);
+    }
+    if(val>bestVal){bestVal=val;bestDay=i;}
+    ctx.fillStyle=i===6?color:'transparent';
+    ctx.fillRect(x,H-pad.b+4,barW,3);
+    ctx.fillStyle=isDark?'rgba(255,255,255,.5)':'rgba(0,0,0,.4)';
+    ctx.font=(i===6?'bold ':'')+'11px sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(labels[i],x+barW/2,H-pad.b+18);
+  });
+  var metricNames={vocab:'كلمة',trans:'ترجمة',correct:'إجابة'};
+  var bestEl=document.getElementById('best-day');
+  if(bestEl)bestEl.textContent=bestVal>0?labels[bestDay]+' ← '+bestVal+' '+metricNames[chartMetric]:'لا توجد بيانات بعد';
+}
 function refStats(){
   document.getElementById('stv').textContent=vocab.length;
   document.getElementById('stt').textContent=stats.texts||0;
@@ -871,8 +2436,9 @@ function refStats(){
   document.getElementById('str').textContent=stats.trans||0;
   var m=vocab.length?Math.min(100,Math.round((stats.correct||0)/vocab.length*100)):0;
   document.getElementById('mval').textContent=m+'%';
+  setTimeout(drawChart,50);
 }
-function refAll(){refVocab();refStats();}
+function refAll(){refVocab();refStats();refLib();}
 
 /* TOAST */
 function toast(msg){
@@ -881,8 +2447,567 @@ function toast(msg){
   setTimeout(function(){t.classList.remove('show');},2500);
 }
 
+/* EXPLAIN */
+var currentExplainType='summary';
+var explainPrompts={
+  // الملخص → دائماً بالعربية
+  summary:{
+    all:'اقرأ النص التالي وقدّم ملخصاً واضحاً بالعربية في 4-6 جمل مع الحفاظ على الأفكار الأساسية.\n\nالنص:\n'
+  },
+  // الأفكار الرئيسية → بلغة النص
+  ideas:{
+    ar:'استخرج الأفكار الرئيسية من النص وقدّمها كقائمة مرقمة بالعربية. كل فكرة في سطر.\n\nالنص:\n',
+    en:'Extract the main ideas from the text as a numbered list in English. One idea per line.\n\nText:\n',
+    fr:'Extrayez les idées principales du texte sous forme de liste numérotée en français.\n\nTexte:\n',
+    es:'Extrae las ideas principales del texto como lista numerada en español.\n\nTexto:\n',
+    de:'Extrahieren Sie die Hauptideen als nummerierte Liste auf Deutsch.\n\nText:\n',
+    tr:'Ana fikirleri numaralı liste olarak Türkçe sunun.\n\nMetin:\n'
+  },
+  // مفردات صعبة → من لغة النص إلى العربية
+  vocab:{
+    all:'استخرج من النص 6-8 كلمات أو تعابير صعبة أو مهمة، وقدّم لكل منها:\nالكلمة بلغتها الأصلية ← معناها بالعربية\nقدّمها كقائمة واضحة.\n\nالنص:\n'
+  },
+  // تراكيب لغوية → بلغة النص
+  grammar:{
+    ar:'حلّل النص لغوياً بالعربية: اذكر 3-4 تراكيب نحوية أو أسلوبية مميزة مع مثال من النص وشرح مختصر.\n\nالنص:\n',
+    en:'Analyze the text linguistically in English: identify 3-4 notable grammatical or stylistic structures with an example and brief explanation.\n\nText:\n',
+    fr:'Analysez le texte en français: identifiez 3-4 structures grammaticales ou stylistiques avec exemple et explication.\n\nTexte:\n',
+    es:'Analiza el texto en español: 3-4 estructuras gramaticales con ejemplo y explicación.\n\nTexto:\n',
+    de:'Analysieren Sie den Text auf Deutsch: 3-4 grammatikalische Strukturen mit Beispiel.\n\nText:\n',
+    tr:'Metni Türkçe analiz edin: 3-4 dilbilgisi yapısını örnek ve açıklamayla.\n\nMetin:\n'
+  }
+};
+function explainText(){
+  var tx=document.getElementById('ra').innerText.trim();
+  if(!tx||tx.includes('حمّل نصاً')){toast('⚠️ لا يوجد نص في القراءة');return;}
+  if(!GROQ_KEY){toast('⚠️ أدخل مفتاح Groq من إعدادات 🔑');return;}
+  currentExplainType='summary';
+  document.querySelectorAll('.etab').forEach(function(b){b.classList.remove('active-etab');});
+  document.querySelector('[data-t="summary"]').classList.add('active-etab');
+  document.getElementById('explain-result').textContent='';
+  document.getElementById('re-explain-btn').style.display='none';
+  document.getElementById('explain-modal').style.display='flex';
+  callExplain(tx,'summary');
+}
+function switchExplain(type){
+  currentExplainType=type;
+  document.querySelectorAll('.etab').forEach(function(b){b.classList.remove('active-etab');});
+  document.querySelector('[data-t="'+type+'"]').classList.add('active-etab');
+  document.getElementById('explain-result').textContent='';
+  document.getElementById('re-explain-btn').style.display='none';
+  var tx=document.getElementById('ra').innerText.trim();
+  callExplain(tx,type);
+}
+function reExplain(){
+  var tx=document.getElementById('ra').innerText.trim();
+  callExplain(tx,currentExplainType);
+}
+function callExplain(tx,type){
+  var el=document.getElementById('explain-result');
+  var loading=document.getElementById('explain-loading');
+  el.textContent='';loading.style.display='block';
+  document.getElementById('re-explain-btn').style.display='none';
+  document.getElementById('translate-explain-btn').style.display='none';
+  var lang=detLang(tx);
+  // الملخص والمفردات دائماً بالعربية
+  var isAlwaysAr=(type==='summary'||type==='vocab');
+  var promptMap=explainPrompts[type];
+  var prompt=(isAlwaysAr?promptMap.all:(promptMap[lang]||promptMap['en']))+tx.substring(0,3000);
+  var sysMsg=isAlwaysAr
+    ?'أنت مساعد تعليمي. أجب بالعربية فقط بأسلوب واضح ومنظم.'
+    :'You are an educational assistant. Answer ONLY in the same language as the text provided. Be clear and organized.';
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+    body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      max_tokens:800,
+      messages:[
+        {role:'system',content:sysMsg},
+        {role:'user',content:prompt}
+      ]
+    })
+  })
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(function(d){
+    loading.style.display='none';
+    var res=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+    el.textContent=res?res.trim():'⚠️ فشل التحليل';
+    document.getElementById('re-explain-btn').style.display='inline-block';
+    // زر الترجمة للعربية فقط للأفكار والتراكيب وإذا اللغة مش عربية
+    if(!isAlwaysAr&&lang!=='ar'){
+      document.getElementById('translate-explain-btn').style.display='inline-block';
+    }
+  })
+  .catch(function(e){
+    loading.style.display='none';
+    el.textContent='❌ '+(e.message||'خطأ');
+    document.getElementById('re-explain-btn').style.display='inline-block';
+  });
+}
+
+function translateExplainToAr(){
+  var el=document.getElementById('explain-result');
+  var tx=el.textContent.trim();
+  if(!tx)return;
+  var btn=document.getElementById('translate-explain-btn');
+  btn.textContent='⏳…';btn.disabled=true;
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+    body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      max_tokens:800,
+      messages:[
+        {role:'system',content:'أنت مترجم. ترجم النص التالي إلى العربية بدقة بدون أي تعليق.'},
+        {role:'user',content:tx}
+      ]
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var res=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+    if(res)el.textContent=res.trim();
+    btn.style.display='none';
+  })
+  .catch(function(){btn.textContent='🌐 ترجمة للعربية';btn.disabled=false;});
+}
+/* READING QUIZ */
+var rQuizData=[];
+function startReadingQuiz(){
+  var tx=document.getElementById('ra').innerText.trim();
+  if(!tx||tx.includes('حمّل نصاً')){toast('⚠️ لا يوجد نص في القراءة');return;}
+  if(!GROQ_KEY){toast('⚠️ أدخل مفتاح Groq من إعدادات 🔑');return;}
+  document.getElementById('rquiz-modal').style.display='flex';
+  document.getElementById('rquiz-loading').style.display='block';
+  document.getElementById('rquiz-body').style.display='none';
+  document.getElementById('rquiz-result').style.display='none';
+  rQuizData=[];
+  var lang=detLang(tx);
+  var langNames={ar:'Arabic',en:'English',fr:'French',es:'Spanish',de:'German',tr:'Turkish'};
+  var langLabel=langNames[lang]||'English';
+  var prompt='Text language: '+langLabel+'\n\nCreate 4 multiple choice questions about the following text.\nIMPORTANT: Write EVERY question and EVERY answer option in '+langLabel+' ONLY. Absolutely no other language.\n\nReturn ONLY a valid JSON array:\n[{"q":"question","opts":["opt1","opt2","opt3","opt4"],"ans":0}]\n\n"ans" = index (0-3) of correct answer.\n\nText:\n'+tx.substring(0,2500);
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+    body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      max_tokens:1200,
+      messages:[
+        {role:'system',content:'You are a reading comprehension teacher. You MUST write ALL questions and answers in '+langLabel+' language ONLY. Never use any other language. Return ONLY valid JSON array, no markdown, no extra text.'},
+        {role:'user',content:prompt}
+      ]
+    })
+  })
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(function(d){
+    var raw=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||'';
+    var match=raw.match(/\[[\s\S]*\]/);
+    if(!match)throw new Error('تنسيق خاطئ');
+    rQuizData=JSON.parse(match[0]);
+    renderRQuiz(lang);
+  })
+  .catch(function(e){
+    document.getElementById('rquiz-loading').style.display='none';
+    document.getElementById('rquiz-body').innerHTML='<p style="color:var(--danger);text-align:center">❌ '+(e.message||'خطأ')+'</p>';
+    document.getElementById('rquiz-body').style.display='block';
+  });
+}
+
+function renderRQuiz(lang){
+  document.getElementById('rquiz-loading').style.display='none';
+  var body=document.getElementById('rquiz-body');
+  body.style.display='block';
+  // استخدم lang المُمرَّر أو اكتشفه من الأسئلة
+  var allText=rQuizData.map(function(q){return q.q+' '+(q.opts||[]).join(' ');}).join(' ');
+  var detectedLang=lang||detLang(allText);
+  var isRTL=detectedLang==='ar';
+  var dir=isRTL?'rtl':'ltr';
+  var align=isRTL?'right':'left';
+  var submitLabels={ar:'✅ إرسال الإجابات',fr:'✅ Envoyer les réponses',en:'✅ Submit Answers',es:'✅ Enviar respuestas',de:'✅ Antworten senden',tr:'✅ Cevapları gönder'};
+  var submitLabel=submitLabels[detectedLang]||submitLabels.en;
+  var html='<div id="rquiz-form">';
+  rQuizData.forEach(function(q,qi){
+    html+='<div style="margin-bottom:18px;padding:14px;background:var(--bg);border-radius:12px;border:1.5px solid var(--border);direction:'+dir+';text-align:'+align+'">';
+    html+='<p style="font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.7">'+(qi+1)+'. '+q.q+'</p>';
+    q.opts.forEach(function(opt,oi){
+      // radio دائماً على يسار الخيار في LTR، ويمين الخيار في RTL (السلوك الطبيعي للمتصفح)
+      html+='<label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;cursor:pointer;line-height:1.6">';
+      html+='<input type="radio" name="q'+qi+'" value="'+oi+'" style="margin-top:4px;accent-color:var(--primary);flex-shrink:0">';
+      html+='<span style="color:var(--text);font-size:.93rem">'+opt+'</span></label>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<button onclick="submitRQuiz()" style="width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-family:\'Cairo\',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;margin-top:6px;direction:'+dir+'">'+submitLabel+'</button>';
+  body.innerHTML=html;
+}
+
+function submitRQuiz(){
+  var correct=0,total=rQuizData.length;
+  var allAnswered=true;
+  // تلوين الإجابات
+  rQuizData.forEach(function(q,qi){
+    var sel=document.querySelector('input[name="q'+qi+'"]:checked');
+    if(!sel){allAnswered=false;return;}
+    var chosen=parseInt(sel.value);
+    var labels=document.querySelectorAll('input[name="q'+qi+'"]');
+    labels.forEach(function(inp,oi){
+      var lbl=inp.parentElement;
+      if(oi===q.ans){lbl.style.background='rgba(16,185,129,.15)';lbl.style.borderRadius='8px';lbl.style.padding='4px 8px';}
+      else if(oi===chosen&&chosen!==q.ans){lbl.style.background='rgba(239,68,68,.12)';lbl.style.borderRadius='8px';lbl.style.padding='4px 8px';}
+      inp.disabled=true;
+    });
+    if(chosen===q.ans)correct++;
+  });
+  if(!allAnswered){toast('⚠️ أجب على جميع الأسئلة');return;}
+  // إخفاء زر الإرسال
+  var submitBtn=document.querySelector('#rquiz-body button');
+  if(submitBtn)submitBtn.style.display='none';
+  // عرض النتيجة
+  setTimeout(function(){
+    document.getElementById('rquiz-result').style.display='block';
+    var pct=Math.round((correct/total)*100);
+    document.getElementById('rquiz-score').textContent=correct+'/'+total;
+    var msgs=['حاول مجدداً 💪','جيد، واصل التحسن 📈','ممتاز! 🌟','مثالي! 🏆'];
+    var mi=pct<50?0:pct<75?1:pct<100?2:3;
+    document.getElementById('rquiz-msg').textContent=msgs[mi]+' — '+pct+'%';
+    stats.correct+=correct;trackDaily('correct',correct);sv();
+    document.getElementById('rquiz-result').scrollIntoView({behavior:'smooth'});
+  },400);
+}
+function closeRQuiz(){document.getElementById('rquiz-modal').style.display='none';}
+
+/* CHAT */
+var chatHistory=[];
+var chatCtx='';
+var chatMode='free'; // free | correct | qa
+var chatLang='ar';
+var chatLangNames={ar:'عربي',fr:'فرنسي',en:'إنجليزي',es:'إسباني',de:'ألماني',tr:'تركي'};
+var chatLangList=['ar','fr','en','es','de','tr'];
+var chatLangIdx=0;
+var voiceRec=null;
+var voiceActive=false;
+
+var chatSystemPrompts={
+  free:{
+    ar:'أنت مساعد لغوي ودود. تتحدث بالعربية. أجب بشكل طبيعي وبسيط.',
+    fr:'Tu es un assistant linguistique sympathique. Tu parles français naturellement.',
+    en:'You are a friendly language assistant. Speak in natural English.',
+    es:'Eres un asistente lingüístico amigable. Habla en español natural.',
+    de:'Du bist ein freundlicher Sprachassistent. Sprich auf natürlichem Deutsch.',
+    tr:'Sen arkadaşça bir dil asistanısın. Doğal Türkçe konuş.'
+  },
+  correct:{
+    ar:'أنت مدرّس لغة. عندما يكتب المستخدم أي شيء:\n1. صحّح أخطاءه اللغوية إن وجدت (وأشر إليها بوضوح)\n2. ثم أجب على رسالته بشكل طبيعي\nإذا لم يكن هناك أخطاء قل: ✅ ممتاز، لا أخطاء',
+    fr:'Tu es un professeur de langue. Quand l\'utilisateur écrit:\n1. Corrige ses erreurs linguistiques si nécessaire\n2. Puis réponds naturellement\nSi pas d\'erreurs: ✅ Parfait, aucune erreur',
+    en:'You are a language teacher. When the user writes:\n1. Correct any language errors clearly\n2. Then respond naturally\nIf no errors: ✅ Perfect, no errors',
+    es:'Eres un profesor de idiomas. Cuando el usuario escribe:\n1. Corrige errores lingüísticos\n2. Luego responde naturalmente\nSin errores: ✅ Perfecto',
+    de:'Du bist ein Sprachlehrer. Wenn der Benutzer schreibt:\n1. Korrigiere Sprachfehler\n2. Dann antworte natürlich\nKeine Fehler: ✅ Perfekt',
+    tr:'Dil öğretmenisin. Kullanıcı yazdığında:\n1. Dil hatalarını düzelt\n2. Sonra doğal yanıtla\nHata yoksa: ✅ Mükemmel'
+  },
+  qa:{
+    ar:'أنت مدرّس يختبر الطالب. ابدأ بسؤال واحد واضح وانتظر الجواب. عندما يجيب:\n- إذا الجواب صحيح: أشكره وانتقل لسؤال جديد\n- إذا خطأ: صحّح وأعطِ تلميحاً ثم كرر السؤال\nاجعل الأسئلة تدريجية من السهل للصعب.',
+    fr:'Tu es un professeur qui teste l\'étudiant. Commence par une question claire. Quand il répond:\n- Bonne réponse: félicite et passe à la suivante\n- Mauvaise: corrige et donne un indice',
+    en:'You are a teacher testing the student. Start with one clear question. When they answer:\n- Correct: praise and ask next question\n- Wrong: correct and give a hint',
+    es:'Eres un profesor que examina al estudiante. Empieza con una pregunta. Cuando responda:\n- Correcto: felicita y siguiente\n- Incorrecto: corrige y da una pista',
+    de:'Du bist ein Lehrer der den Schüler testet. Stelle eine klare Frage. Wenn er antwortet:\n- Richtig: lobe und nächste Frage\n- Falsch: korrigiere und gib Hinweis',
+    tr:'Öğrenciyi test eden bir öğretmensin. Bir soru sor. Cevaplandığında:\n- Doğru: tebrik et ve sonraki soru\n- Yanlış: düzelt ve ipucu ver'
+  }
+};
+
+function setChatMode(mode){
+  chatMode=mode;
+  ['free','correct','qa'].forEach(function(m){
+    var btn=document.getElementById('mode-'+m);
+    var active=m===mode;
+    btn.style.background=active?'var(--primary)':'var(--bg)';
+    btn.style.color=active?'#fff':'var(--muted)';
+    btn.style.borderColor=active?'var(--primary)':'var(--border)';
+    btn.style.fontWeight=active?'700':'400';
+  });
+  clearChat();
+  // في وضع AI يسأل → AI يبدأ أولاً
+  if(mode==='qa'){
+    setTimeout(function(){
+      aiStartQA();
+    },300);
+  }
+}
+
+function aiStartQA(){
+  if(!GROQ_KEY){toast('⚠️ أدخل مفتاح Groq من إعدادات 🔑');return;}
+  var sys=chatSystemPrompts.qa[chatLang]||chatSystemPrompts.qa.ar;
+  if(chatCtx)sys+='\n\nموضوع الأسئلة من النص:\n'+chatCtx.substring(0,1000);
+  var startMsg={ar:'ابدأ بالسؤال الأول',fr:'Commence par la première question',en:'Start with the first question',es:'Empieza con la primera pregunta',de:'Stelle die erste Frage',tr:'İlk soruyla başla'};
+  callGroqChat(sys,[{role:'user',content:startMsg[chatLang]||startMsg.ar}],true);
+}
+
+function setChatLang(){
+  chatLangIdx=(chatLangIdx+1)%chatLangList.length;
+  chatLang=chatLangList[chatLangIdx];
+  document.getElementById('chat-lang-btn').textContent='🌐 '+chatLangNames[chatLang];
+  toast('🌐 لغة المحادثة: '+chatLangNames[chatLang]);
+}
+
+function setChatCtx(){
+  var tx=document.getElementById('ra').innerText.trim();
+  if(!tx||tx.includes('حمّل نصاً')){toast('⚠️ لا يوجد نص في القراءة');return;}
+  chatCtx=tx.substring(0,2000);
+  document.getElementById('chat-ctx-label').textContent=tx.substring(0,55)+'…';
+  document.getElementById('chat-ctx-bar').style.display='block';
+  toast('✅ تم تحميل سياق النص');
+}
+function removeChatCtx(){chatCtx='';document.getElementById('chat-ctx-bar').style.display='none';}
+
+function clearChat(){
+  chatHistory=[];
+  var msgs=document.getElementById('chat-msgs');
+  var modeLabels={free:'محادثة حرة 💬',correct:'تصحيح الأخطاء ✏️',qa:'AI يسأل وأنت تجيب 🎯'};
+  msgs.innerHTML='<div style="align-self:flex-start;max-width:88%;background:var(--bg);border:1.5px solid var(--border);border-radius:16px 16px 16px 4px;padding:11px 14px;font-size:.9rem;line-height:1.8;color:var(--text)">الوضع: <strong>'+modeLabels[chatMode]+'</strong><br><span style="font-size:.78rem;color:var(--muted)">اكتب أو تكلم 🎙️</span></div>';
+}
+
+function addChatBubble(role,text){
+  var msgs=document.getElementById('chat-msgs');
+  var isAi=role==='ai';
+  var isRTL=/[\u0600-\u06FF]/.test(text);
+  var dir=isRTL?'rtl':'ltr';
+  var align=isRTL?'right':'left';
+  var div=document.createElement('div');
+  div.style.cssText='align-self:'+(isAi?'flex-start':'flex-end')+';max-width:88%;'
+    +'background:'+(isAi?'var(--bg)':'var(--primary)')+';'
+    +'border:'+(isAi?'1.5px solid var(--border)':'none')+';'
+    +'border-radius:'+(isAi?'16px 16px 16px 4px':'16px 16px 4px 16px')+';'
+    +'padding:11px 14px;font-size:.9rem;line-height:1.8;'
+    +'color:'+(isAi?'var(--text)':'#fff')+';'
+    +'white-space:pre-wrap;'
+    +'direction:'+dir+';text-align:'+align;
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+function sendChat(){
+  if(!GROQ_KEY){toast('⚠️ أدخل مفتاح Groq من إعدادات 🔑');return;}
+  var inp=document.getElementById('chat-inp');
+  var msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';inp.style.height='auto';
+  addChatBubble('user',msg);
+  chatHistory.push({role:'user',content:msg});
+  var sys=chatSystemPrompts[chatMode][chatLang]||chatSystemPrompts[chatMode].ar;
+  if(chatCtx)sys+='\n\nسياق النص:\n'+chatCtx.substring(0,1000);
+  callGroqChat(sys,chatHistory,false);
+}
+
+function callGroqChat(sys,messages,isAutoStart){
+  var btn=document.getElementById('chat-send-btn');
+  btn.textContent='⏳';btn.disabled=true;
+  var loadDiv=addChatBubble('ai','…');
+  fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+    body:JSON.stringify({
+      model:'llama-3.3-70b-versatile',
+      max_tokens:500,
+      messages:[{role:'system',content:sys}].concat(messages)
+    })
+  })
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(function(d){
+    var reply=d&&d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||'…';
+    reply=reply.trim();
+    loadDiv.textContent=reply;
+    if(!isAutoStart)chatHistory.push({role:'assistant',content:reply});
+    else chatHistory=[{role:'assistant',content:reply}];
+    if(chatHistory.length>20)chatHistory=chatHistory.slice(-20);
+    // نطق رد AI تلقائياً
+    spkChat(reply);
+  })
+  .catch(function(e){loadDiv.textContent='❌ '+(e.message||'خطأ');})
+  .finally(function(){btn.textContent='➤';btn.disabled=false;});
+}
+
+function spkChat(text){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  var langMap={ar:'ar-SA',fr:'fr-FR',en:'en-US',es:'es-ES',de:'de-DE',tr:'tr-TR'};
+  u.lang=langMap[chatLang]||'ar-SA';
+  u.rate=0.95;
+  var voice=getBestVoice(u.lang);
+  if(voice)u.voice=voice;
+  window.speechSynthesis.speak(u);
+}
+
+/* التعرف على الصوت */
+function toggleVoice(){
+  // الميكروفون يحتاج HTTPS
+  if(location.protocol!=='https:'&&location.hostname!=='localhost'){
+    toast('🔒 الميكروفون يحتاج HTTPS — ارفع التطبيق على GitHub Pages');
+    return;
+  }
+  if(voiceActive){stopVoice();return;}
+  // طلب إذن الميكروفون أولاً
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true})
+    .then(function(stream){
+      stream.getTracks().forEach(function(t){t.stop();});
+      startVoice();
+    })
+    .catch(function(e){
+      if(e.name==='NotAllowedError'){
+        toast('⚠️ اسمح للمتصفح باستخدام الميكروفون من الإعدادات');
+      } else {
+        toast('⚠️ لا يمكن الوصول للميكروفون: '+e.message);
+      }
+    });
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  voiceRec=new SR();
+  var langMap={ar:'ar-SA',fr:'fr-FR',en:'en-US',es:'es-ES',de:'de-DE',tr:'tr-TR'};
+  voiceRec.lang=langMap[chatLang]||'ar-SA';
+  voiceRec.continuous=false;
+  voiceRec.interimResults=true;
+  voiceRec.maxAlternatives=1;
+  voiceActive=true;
+  var vBtn=document.getElementById('voice-btn');
+  vBtn.style.background='#ef4444';
+  vBtn.style.color='#fff';
+  vBtn.style.border='none';
+  vBtn.textContent='⏹';
+  document.getElementById('voice-indicator').style.display='block';
+  document.getElementById('chat-inp').value='';
+  voiceRec.onresult=function(e){
+    var transcript='';
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      transcript+=e.results[i][0].transcript;
+    }
+    document.getElementById('chat-inp').value=transcript;
+  };
+  voiceRec.onend=function(){
+    stopVoice();
+    var msg=document.getElementById('chat-inp').value.trim();
+    if(msg)setTimeout(function(){sendChat();},200);
+  };
+  voiceRec.onerror=function(e){
+    stopVoice();
+    var msgs={
+      'not-allowed':'⚠️ الميكروفون محظور — اسمح له من إعدادات Chrome',
+      'no-speech':'لم يُسمع صوت — حاول مجدداً',
+      'network':'⚠️ خطأ في الشبكة',
+      'aborted':''
+    };
+    var msg=msgs[e.error]||('❌ خطأ: '+e.error);
+    if(msg)toast(msg);
+  };
+  try{
+    voiceRec.start();
+  } catch(e){
+    stopVoice();
+    toast('❌ فشل التسجيل — تأكد من إذن الميكروفون');
+  }
+}
+
+function stopVoice(){
+  voiceActive=false;
+  if(voiceRec){try{voiceRec.abort();}catch(e){}}
+  voiceRec=null;
+  var vBtn=document.getElementById('voice-btn');
+  vBtn.style.background='var(--bg)';
+  vBtn.style.color='var(--text)';
+  vBtn.style.border='1.5px solid var(--border)';
+  vBtn.textContent='🎙️';
+  document.getElementById('voice-indicator').style.display='none';
+}
+
+function closeExplain(){document.getElementById('explain-modal').style.display='none';}
+
+/* وضع التركيز */
+var focusMode=false;
+function toggleFocus(){
+  focusMode=!focusMode;
+  document.body.classList.toggle('focus-mode',focusMode);
+  document.getElementById('focus-btn').textContent=focusMode?'✕':'🌙';
+  document.getElementById('focus-btn').title=focusMode?'خروج من التركيز':'وضع التركيز';
+  if(focusMode)toast('🌙 وضع التركيز — اضغط ✕ للخروج');
+}
+
+function diagVoices(){
+  // إذا كان الصوت يعمل الآن → ممتاز، لا حاجة لتشخيص
+  if(ttsOn){toast('✅ الصوت يعمل بشكل جيد');return;}
+  function show(){
+    var voices=window.speechSynthesis.getVoices();
+    if(!voices.length){toast('⚠️ لا توجد أصوات — حاول مجدداً');return;}
+    var tx=document.getElementById('ra').innerText.trim();
+    var lang=tx?loc(detLang(tx)):'ar-SA';
+    var base=lang.split('-')[0];
+    var matched=voices.filter(function(v){return v.lang.startsWith(base);});
+    var langNames={ar:'عربية',en:'إنجليزية',fr:'فرنسية',es:'إسبانية',de:'ألمانية',tr:'تركية'};
+    var lName=langNames[base]||base;
+    if(matched.length){
+      toast('✅ أصوات '+lName+': '+matched.length+' — '+matched[0].name);
+    } else {
+      // لا يوجد صوت مُصنَّف لهذه اللغة لكن المتصفح قد يقرأها بالصوت الافتراضي
+      toast('ℹ️ سيُستخدم الصوت الافتراضي ('+voices.length+' صوت متاح) — اضغط استماع لتجربة');
+    }
+  }
+  var v=window.speechSynthesis.getVoices();
+  if(v.length){show();}
+  else{window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.onvoiceschanged=null;show();};setTimeout(show,1500);}
+}
+
+function toggleDark(){
+  dark=!dark;
+  document.body.classList.toggle('dark',dark);
+  if(dark&&nightMode){nightMode=false;document.body.classList.remove('night');document.body.style.filter='';document.getElementById('night-btn').textContent='🕯️';}
+  document.getElementById('dark-btn').textContent=dark?'☀️':'🌓';
+  localStorage.setItem('ll_dark',dark?'1':'0');
+}
+
 /* ENTER KEY */
 document.getElementById('key-inp').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
+// تهيئة شاشة القفل
+initLockScreen();
+
+/* PWA — تسجيل Service Worker */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').then(function(reg){
+      console.log('SW registered');
+    }).catch(function(e){console.log('SW error:',e);});
+  });
+}
+
+/* زر التثبيت */
+var deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  deferredPrompt=e;
+  // إظهار زر التثبيت
+  var btn=document.getElementById('install-btn');
+  if(btn)btn.style.display='flex';
+});
+window.addEventListener('appinstalled',function(){
+  deferredPrompt=null;
+  var btn=document.getElementById('install-btn');
+  if(btn)btn.style.display='none';
+  toast('🎉 تم تثبيت التطبيق بنجاح!');
+});
+function installApp(){
+  if(!deferredPrompt){toast('التطبيق مثبَّت أو غير متاح التثبيت');return;}
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(r){
+    if(r.outcome==='accepted')toast('🎉 جارٍ التثبيت…');
+    deferredPrompt=null;
+  });
+}
 </script>
 </body>
 </html>
