@@ -308,6 +308,7 @@ body.focus-mode #focus-btn{color:#f59e0b!important;border-color:#f59e0b!importan
           <span id="ssv" style="font-size:.8rem;color:var(--muted);min-width:38px">⚡1.0×</span>
           <button class="cb" onclick="chgS(.25)">+</button>
           <button class="cb" title="تشخيص الأصوات" onclick="diagVoices()">🔎</button>
+          <button class="cb" title="نسخ النص" onclick="copyReaderText()">📋</button>
           <button class="pb" id="pbtn" onclick="togTTS()">▶ استماع</button>
         </div>
         <div class="pw">
@@ -2939,6 +2940,27 @@ function toggleFocus(){
   if(focusMode)toast('🌙 وضع التركيز — اضغط ✕ للخروج');
 }
 
+function copyReaderText(){
+  var tx=document.getElementById('ra').innerText.trim();
+  if(!tx||tx.includes('حمّل نصاً')){toast('لا يوجد نص');return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(tx).then(function(){
+      toast('📋 تم نسخ النص ('+tx.length+' حرف)');
+    }).catch(function(){
+      fallbackCopy(tx);
+    });
+  } else {
+    fallbackCopy(tx);
+  }
+}
+function fallbackCopy(tx){
+  var ta=document.createElement('textarea');
+  ta.value=tx;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('📋 تم نسخ النص');}
+  catch(e){toast('⚠️ لم يتمكن من النسخ');}
+  document.body.removeChild(ta);
+}
 function diagVoices(){
   // إذا كان الصوت يعمل الآن → ممتاز، لا حاجة لتشخيص
   if(ttsOn){toast('✅ الصوت يعمل بشكل جيد');return;}
